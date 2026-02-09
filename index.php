@@ -1,13 +1,8 @@
 <?php
 session_start();
-
-$adminUser = 'admin';
-$adminPass = 'CtwyMobM@1T5aJ@dPxy$2';
+require __DIR__ . '/db.php';
 
 $isAdmin = !empty($_SESSION['is_admin']);
-$loginError = null;
-$actionMsg = null;
-$actionErr = null;
 
 $rootDir = __DIR__;
 $videoDir = $rootDir . '/videos';
@@ -15,22 +10,16 @@ $thumbMapFile = $videoDir . '/.thumbs.json';
 
 function loadThumbMap(string $file): array
 {
-    if (!is_file($file)) {
-        return [];
-    }
+    if (!is_file($file)) return [];
     $data = json_decode((string)file_get_contents($file), true);
     return is_array($data) ? $data : [];
 }
-
 function saveThumbMap(string $file, array $map): bool
 {
     $payload = json_encode($map, JSON_UNESCAPED_SLASHES);
-    if ($payload === false) {
-        return false;
-    }
+    if ($payload === false) return false;
     return file_put_contents($file, $payload, LOCK_EX) !== false;
 }
-
 function sanitizeVideoName(string $name): string
 {
     $name = preg_replace('/[^a-zA-Z0-9 _-]+/', '', $name);
@@ -38,138 +27,121 @@ function sanitizeVideoName(string $name): string
     $name = trim($name, '_-');
     return $name;
 }
-
 function resolveVideoPath(string $videoDir, string $file): ?string
 {
     $file = basename($file);
     $path = $videoDir . '/' . $file;
-    if (!is_file($path)) {
-        return null;
-    }
-    if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'mp4') {
-        return null;
-    }
+    if (!is_file($path)) return null;
+    if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'mp4') return null;
     return $path;
 }
-
 function sanitizeThumbPath(string $path): ?string
 {
     $path = trim(str_replace('\\', '/', $path));
-    if ($path === '') {
-        return null;
-    }
-    if (str_starts_with($path, '/')) {
-        return null;
-    }
-    if (preg_match('~^[a-z]+:~i', $path)) {
-        return null;
-    }
-    if (strpos($path, '..') !== false) {
-        return null;
-    }
+    if ($path === '') return null;
+    if (str_starts_with($path, '/')) return null;
+    if (preg_match('~^[a-z]+:~i', $path)) return null;
+    if (strpos($path, '..') !== false) return null;
     return $path;
 }
-
 function resolveThumbPath(string $rootDir, string $relative): ?string
 {
     $relative = sanitizeThumbPath($relative);
-    if ($relative === null) {
-        return null;
-    }
+    if ($relative === null) return null;
+
     $fullPath = $rootDir . '/' . $relative;
     $realRoot = realpath($rootDir);
     $realPath = realpath($fullPath);
-    if ($realRoot === false || $realPath === false) {
-        return null;
-    }
-    if (strpos($realPath, $realRoot) !== 0) {
-        return null;
-    }
-    if (!is_file($realPath)) {
-        return null;
-    }
+
+    if ($realRoot === false || $realPath === false) return null;
+    if (strpos($realPath, $realRoot) !== 0) return null;
+    if (!is_file($realPath)) return null;
+
     return $relative;
 }
 
 $thumbMap = loadThumbMap($thumbMapFile);
 
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header('Location: /index.php');
-    exit;
-}
+$actionMsg = $_SESSION['action_msg'] ?? null;
+$actionErr = $_SESSION['action_err'] ?? null;
+unset($_SESSION['action_msg'], $_SESSION['action_err']);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'login') {
-    $login = $_POST['login'] ?? '';
-    $password = $_POST['password'] ?? '';
-    if ($login === $adminUser && $password === $adminPass) {
-        $_SESSION['is_admin'] = true;
-        header('Location: /index.php?admin=1');
-        exit;
-    }
-    $loginError = 'Zly login lub haslo';
-}
+// admin akcje (rename/delete/set_thumb) – tylko jeśli zalogowany
+if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
 
-if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_video') {
-    $file = $_POST['file'] ?? '';
-    $path = resolveVideoPath($videoDir, $file);
-    if ($path && unlink($path)) {
-        if (isset($thumbMap[$file])) {
-            unset($thumbMap[$file]);
-            saveThumbMap($thumbMapFile, $thumbMap);
-        }
-        $actionMsg = 'Film zostal usuniety.';
-    } else {
-        $actionErr = 'Nie udalo sie usunac pliku.';
-    }
-}
+    if ($action === 'delete_video') {
+        $file = $_POST['file'] ?? '';
+        $path = resolveVideoPath($videoDir, $file);
 
-if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'rename_video') {
-    $file = $_POST['file'] ?? '';
-    $newName = sanitizeVideoName($_POST['new_name'] ?? '');
-    $path = resolveVideoPath($videoDir, $file);
-    if (!$path) {
-        $actionErr = 'Nie znaleziono pliku do zmiany nazwy.';
-    } elseif ($newName === '') {
-        $actionErr = 'Podaj nowa nazwe.';
-    } else {
-        $newFile = $newName . '.mp4';
-        $target = $videoDir . '/' . $newFile;
-        if (is_file($target)) {
-            $actionErr = 'Plik o tej nazwie juz istnieje.';
-        } elseif (rename($path, $target)) {
+        if ($path && @unlink($path)) {
             if (isset($thumbMap[$file])) {
-                $thumbMap[$newFile] = $thumbMap[$file];
                 unset($thumbMap[$file]);
                 saveThumbMap($thumbMapFile, $thumbMap);
             }
-            $actionMsg = 'Nazwa filmu zostala zmieniona.';
+            $_SESSION['action_msg'] = 'Film zostal usuniety.';
         } else {
-            $actionErr = 'Nie udalo sie zmienic nazwy pliku.';
+            $_SESSION['action_err'] = 'Nie udalo sie usunac pliku.';
         }
+
+        header('Location: /index.php');
+        exit;
+    }
+
+    if ($action === 'rename_video') {
+        $file = $_POST['file'] ?? '';
+        $newName = sanitizeVideoName($_POST['new_name'] ?? '');
+        $path = resolveVideoPath($videoDir, $file);
+
+        if (!$path) {
+            $_SESSION['action_err'] = 'Nie znaleziono pliku do zmiany nazwy.';
+        } elseif ($newName === '') {
+            $_SESSION['action_err'] = 'Podaj nowa nazwe.';
+        } else {
+            $newFile = $newName . '.mp4';
+            $target = $videoDir . '/' . $newFile;
+
+            if (is_file($target)) {
+                $_SESSION['action_err'] = 'Plik o tej nazwie juz istnieje.';
+            } elseif (@rename($path, $target)) {
+                if (isset($thumbMap[$file])) {
+                    $thumbMap[$newFile] = $thumbMap[$file];
+                    unset($thumbMap[$file]);
+                    saveThumbMap($thumbMapFile, $thumbMap);
+                }
+                $_SESSION['action_msg'] = 'Nazwa filmu zostala zmieniona.';
+            } else {
+                $_SESSION['action_err'] = 'Nie udalo sie zmienic nazwy pliku.';
+            }
+        }
+
+        header('Location: /index.php');
+        exit;
+    }
+
+    if ($action === 'set_thumb') {
+        $file = $_POST['file'] ?? '';
+        $thumbPath = $_POST['thumb_path'] ?? '';
+        $videoPath = resolveVideoPath($videoDir, $file);
+        $thumbRel = resolveThumbPath($rootDir, $thumbPath);
+
+        if (!$videoPath) {
+            $_SESSION['action_err'] = 'Nie znaleziono filmu do ustawienia miniaturki.';
+        } elseif ($thumbRel === null) {
+            $_SESSION['action_err'] = 'Podaj poprawna sciezke do miniaturki.';
+        } else {
+            $thumbMap[$file] = $thumbRel;
+            if (saveThumbMap($thumbMapFile, $thumbMap)) {
+                $_SESSION['action_msg'] = 'Miniaturka zostala ustawiona.';
+            } else {
+                $_SESSION['action_err'] = 'Nie udalo sie zapisac miniaturki.';
+            }
+        }
+
+        header('Location: /index.php');
+        exit;
     }
 }
-
-if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_thumb') {
-    $file = $_POST['file'] ?? '';
-    $thumbPath = $_POST['thumb_path'] ?? '';
-    $videoPath = resolveVideoPath($videoDir, $file);
-    $thumbRel = resolveThumbPath($rootDir, $thumbPath);
-    if (!$videoPath) {
-        $actionErr = 'Nie znaleziono filmu do ustawienia miniaturki.';
-    } elseif ($thumbRel === null) {
-        $actionErr = 'Podaj poprawna sciezke do miniaturki.';
-    } else {
-        $thumbMap[$file] = $thumbRel;
-        if (saveThumbMap($thumbMapFile, $thumbMap)) {
-            $actionMsg = 'Miniaturka zostala ustawiona.';
-        } else {
-            $actionErr = 'Nie udalo sie zapisac miniaturki.';
-        }
-    }
-}
-
-$showLogin = !$isAdmin;
 ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -179,160 +151,34 @@ $showLogin = !$isAdmin;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            min-height: 100vh;
-            background: #0f172a;
-            color: #e5e7eb;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-            background: #0b1224;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-        .topbar-title { font-weight: 600; font-size: 18px; }
-        .admin-badge {
-            margin-left: 8px;
-            padding: 2px 8px;
-            border-radius: 9999px;
-            font-size: 11px;
-            background: rgba(248, 113, 113, 0.2);
-            color: #fda4af;
-            border: 1px solid rgba(248, 113, 113, 0.4);
-        }
-        .topbar-link { color: #fb7185; text-decoration: none; font-weight: 600; }
-        .topbar-link:hover { text-decoration: underline; }
-        .container { max-width: 1200px; margin: 24px auto; padding: 0 16px 40px; }
-        .card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .search-bar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .search-icon {
-            width: 16px;
-            height: 16px;
-            color: #94a3b8;
-        }
-        .search-input {
-            flex: 1;
-        }
-        h2 { margin-bottom: 12px; font-size: 20px; }
-        label { display: block; font-size: 13px; margin-bottom: 6px; color: #cbd5f5; }
-        input[type="text"],
-        input[type="password"],
-        textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.06);
-            color: #e5e7eb;
-            font-size: 14px;
-            outline: none;
-        }
-        textarea { resize: vertical; }
-        .field { margin-bottom: 14px; }
-        .btn {
-            padding: 10px 18px;
-            border-radius: 9999px;
-            border: none;
-            background: linear-gradient(90deg, #fb7185, #f97316);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn:hover { opacity: 0.9; }
-        .error {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(239, 68, 68, 0.2);
-            border-radius: 8px;
-            font-size: 13px;
-            color: #fca5a5;
-        }
-        .notice {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(34, 197, 94, 0.15);
-            border-radius: 8px;
-            font-size: 13px;
-            color: #bbf7d0;
-        }
-        .muted { color: #9ca3af; }
-        .videos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 16px;
-        }
-        .video-card {
-            background: rgba(0,0,0,0.25);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        .video-card video {
-            display: block;
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            background: #000;
-        }
-        .video-card-body { padding: 12px; }
-        .video-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-        .video-date { font-size: 11px; color: #9ca3af; margin-bottom: 6px; }
-        .video-desc { font-size: 12px; color: #d1d5db; line-height: 1.4; }
-        .video-actions { margin-top: 8px; display: flex; gap: 12px; }
-        .action-link {
-            background: none;
-            border: none;
-            color: #fda4af;
-            font-size: 12px;
-            text-decoration: underline;
-            cursor: pointer;
-            padding: 0;
-        }
-        .inline-form { display: inline; }
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.75);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-        }
-        .modal {
-            background: #0b1224;
-            border-radius: 12px;
-            max-width: 900px;
-            width: 95%;
-            padding: 12px 12px 16px;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .close-btn {
-            background: none;
-            border: none;
-            color: #9ca3af;
-            font-size: 20px;
-            cursor: pointer;
-        }
-        video { width: 100%; max-height: 70vh; background: #000; }
+        body { min-height: 100vh; background: #0f172a; color: #e5e7eb; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 18px 14px 40px; }
+        .topbar { display:flex; justify-content:space-between; align-items:center; padding:16px 24px; background:#0b1224; border-bottom:1px solid rgba(255,255,255,0.08); }
+        .topbar-title { font-weight: 700; font-size: 18px; }
+        .admin-badge { margin-left: 8px; padding: 2px 8px; border-radius: 9999px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.25); color:#86efac; font-size: 12px; }
+        .topbar-link { color:#93c5fd; text-decoration:none; padding: 8px 10px; border-radius: 10px; }
+        .topbar-link:hover { background: rgba(147,197,253,0.12); }
+        .card { background:#0b1224; border:1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; margin: 14px 0; }
+        .muted { color:#9ca3af; }
+        .notice { margin-top: 10px; padding: 10px; border-radius: 12px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); }
+        .error { margin-top: 10px; padding: 10px; border-radius: 12px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); }
+        .field { margin-top: 10px; }
+        label { display:block; font-size: 13px; color:#cbd5e1; margin-bottom: 6px; }
+        input { width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#0f172a; color:#e5e7eb; outline: none; }
+        .btn { margin-top: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(147,197,253,0.12); color:#e5e7eb; cursor:pointer; }
+        .btn:hover { background: rgba(147,197,253,0.18); }
+        .videos-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 12px; }
+        .video-card { background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow:hidden; }
+        .video-card video { width: 100%; height: 160px; background:#000; }
+        .video-card-body { padding: 10px 10px 12px; }
+        .video-title { font-weight: 650; margin-bottom: 4px; }
+        .video-date { color:#9ca3af; font-size: 12px; }
+        .video-actions { margin-top: 10px; display:flex; flex-direction:column; gap: 8px; }
+        .action-link { padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.06); color: #e5e7eb; cursor:pointer; text-align:left; }
+        .action-link:hover { background: rgba(255,255,255,0.10); }
+        .inline-form { display:block; }
+        .search-bar { display:flex; align-items:center; gap:10px; margin-top: 10px; }
+        .search-input { flex:1; }
     </style>
 </head>
 <body>
@@ -340,7 +186,7 @@ $showLogin = !$isAdmin;
 <?php include __DIR__ . '/partials/header.php'; ?>
 
 <div class="container">
-    <?php if ($showLogin): ?>
+    <?php if (!$isAdmin): ?>
         <?php include __DIR__ . '/partials/login_form.php'; ?>
     <?php endif; ?>
 
@@ -350,7 +196,6 @@ $showLogin = !$isAdmin;
 
     <?php include __DIR__ . '/partials/videos_list.php'; ?>
 </div>
-
 
 </body>
 </html>

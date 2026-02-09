@@ -7,9 +7,9 @@
     </div>
     <div class="topbar-actions">
         <?php if (!empty($isAdmin)): ?>
-            <a href="?logout=1" class="topbar-link">Wyloguj</a>
+            <a href="/logout.php" class="topbar-link">Wyloguj</a>
         <?php else: ?>
-            <a href="?admin=1#login" class="topbar-link">Zaloguj</a>
+            <a href="#login" class="topbar-link">Zaloguj</a>
         <?php endif; ?>
     </div>
 </header>
