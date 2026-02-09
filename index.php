@@ -802,7 +802,7 @@ if ($metaTableReady) {
       border-radius: var(--radius-md);
       background: #000;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      object-fit: contain;
+      object-fit: cover;
     }
 
     .overlay-video:fullscreen {
