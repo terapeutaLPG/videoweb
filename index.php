@@ -57,7 +57,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
       } elseif ($action === 'thumb') {
         $f = $_FILES['thumb'] ?? null;
-        if (!$f) {
+        if (!$f || !isset($f['error'])) {
           $actionErr = 'Brak pliku miniaturki.';
         } elseif ($f['error'] !== UPLOAD_ERR_OK) {
           $errMap = [
@@ -71,25 +71,29 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
           ];
           $actionErr = $errMap[$f['error']] ?? 'Błąd uploadu miniaturki.';
         } else {
-          $finfo = new finfo(FILEINFO_MIME_TYPE);
-          $mime = $finfo->file($f['tmp_name']);
-          $map = [
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-          ];
-          if (!isset($map[$mime])) {
-            $actionErr = 'Dozwolone formaty: JPG/PNG/WEBP.';
+          if (!isset($f['tmp_name']) || !is_uploaded_file($f['tmp_name'])) {
+            $actionErr = 'Nieprawidłowy plik.';
           } else {
-            foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
-              $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
-              if (is_file($oldThumb)) @unlink($oldThumb);
-            }
-            $dest = $thumbDirFs . '/' . $baseName . '.' . $map[$mime];
-            if (@move_uploaded_file($f['tmp_name'], $dest)) {
-              $actionMsg = 'Dodano miniaturkę.';
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mime = $finfo->file($f['tmp_name']);
+            $map = [
+              'image/jpeg' => 'jpg',
+              'image/png' => 'png',
+              'image/webp' => 'webp',
+            ];
+            if (!isset($map[$mime])) {
+              $actionErr = 'Dozwolone formaty: JPG/PNG/WEBP.';
             } else {
-              $actionErr = 'Nie udało się zapisać miniaturki.';
+              foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+                $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
+                if (is_file($oldThumb)) @unlink($oldThumb);
+              }
+              $dest = $thumbDirFs . '/' . $baseName . '.' . $map[$mime];
+              if (@move_uploaded_file($f['tmp_name'], $dest)) {
+                $actionMsg = 'Dodano miniaturkę.';
+              } else {
+                $actionErr = 'Nie udało się zapisać miniaturki.';
+              }
             }
           }
         }
