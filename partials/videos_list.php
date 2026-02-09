@@ -130,20 +130,6 @@ function nice_title_from_filename(string $fileName): string
                         </div>
                     </div>
 
-                    <div class="video-preview" aria-hidden="true">
-                        <div class="video-preview-thumb">
-                            <?php if ($poster): ?>
-                                <img src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>">
-                            <?php else: ?>
-                                Brak miniatury
-                            <?php endif; ?>
-                        </div>
-                        <div>
-                            <div class="video-preview-title"><?= htmlspecialchars($title) ?></div>
-                            <div class="video-preview-desc"><?= htmlspecialchars($desc ?: 'Brak opisu.') ?></div>
-                        </div>
-                    </div>
-
                     <div class="video-player">
                         <video
                             src="<?= htmlspecialchars($url) ?>"
@@ -213,6 +199,18 @@ function nice_title_from_filename(string $fileName): string
             <div class="muted">Spróbuj krótszej frazy.</div>
         </div>
 
+        <div class="hover-preview" id="hoverPreview" aria-hidden="true">
+            <div class="hover-preview-panel">
+                <div class="hover-preview-thumb" id="hoverPreviewThumb">
+                    <span>Brak miniatury</span>
+                </div>
+                <div>
+                    <div class="hover-preview-title" id="hoverPreviewTitle"></div>
+                    <div class="hover-preview-desc" id="hoverPreviewDesc"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="video-overlay" id="videoOverlay" aria-hidden="true">
             <div class="overlay-content" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
                 <div class="overlay-head">
@@ -273,6 +271,10 @@ function nice_title_from_filename(string $fileName): string
                 const overlayFullscreen = document.getElementById('overlayFullscreen');
                 const tvToggle = document.getElementById('tvToggle');
                 const tvToast = document.getElementById('tvToast');
+                const hoverPreview = document.getElementById('hoverPreview');
+                const hoverPreviewThumb = document.getElementById('hoverPreviewThumb');
+                const hoverPreviewTitle = document.getElementById('hoverPreviewTitle');
+                const hoverPreviewDesc = document.getElementById('hoverPreviewDesc');
 
                 const TV_STORAGE_KEY = 'video_tv_mode';
                 const baseUrl = window.location.pathname + window.location.search;
@@ -361,8 +363,41 @@ function nice_title_from_filename(string $fileName): string
                     overlayVideo.load();
                 };
 
+                const showHoverPreview = (card) => {
+                    if (!hoverPreview || !hoverPreviewThumb || !hoverPreviewTitle || !hoverPreviewDesc) return;
+                    const title = card.dataset.title || '';
+                    const desc = card.dataset.desc || '';
+                    const poster = card.dataset.poster || '';
+
+                    hoverPreviewTitle.textContent = title;
+                    hoverPreviewDesc.textContent = desc || 'Brak opisu.';
+                    hoverPreviewThumb.innerHTML = '';
+
+                    if (poster) {
+                        const img = document.createElement('img');
+                        img.src = poster;
+                        img.alt = title;
+                        hoverPreviewThumb.appendChild(img);
+                    } else {
+                        const span = document.createElement('span');
+                        span.textContent = 'Brak miniatury';
+                        hoverPreviewThumb.appendChild(span);
+                    }
+
+                    hoverPreview.classList.add('is-open');
+                    hoverPreview.setAttribute('aria-hidden', 'false');
+                };
+
+                const hideHoverPreview = () => {
+                    if (!hoverPreview || !hoverPreviewThumb) return;
+                    hoverPreview.classList.remove('is-open');
+                    hoverPreview.setAttribute('aria-hidden', 'true');
+                    hoverPreviewThumb.innerHTML = '';
+                };
+
                 const openOverlay = (card) => {
                     if (!overlay || !overlayVideo || !overlayTitle || !overlayDesc) return;
+                    hideHoverPreview();
                     const title = card.dataset.title || '';
                     const desc = card.dataset.desc || '';
                     const videoSrc = card.dataset.video || '';
@@ -420,12 +455,14 @@ function nice_title_from_filename(string $fileName): string
                             previewTimer = null;
                         }
                         card.classList.remove('is-preview');
+                        hideHoverPreview();
                     };
 
                     const schedulePreview = () => {
                         if (previewTimer) return;
                         previewTimer = setTimeout(() => {
                             card.classList.add('is-preview');
+                            showHoverPreview(card);
                             previewTimer = null;
                         }, 4000);
                     };

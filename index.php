@@ -498,33 +498,46 @@ if ($metaTableReady) {
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
-    .video-preview {
+    .hover-preview {
       position: fixed;
-      left: 50%;
-      top: 50%;
-      width: min(980px, 92vw);
-      height: min(62vh, 520px);
-      display: grid;
-      grid-template-columns: minmax(240px, 42%) 1fr;
-      gap: 22px;
-      padding: 22px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(6, 10, 20, 0.96);
-      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.55);
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(5, 8, 16, 0.55);
       opacity: 0;
-      transform: translate(-50%, -48%) scale(0.98);
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      z-index: 30;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      z-index: 35;
     }
 
-    .video-card.is-preview .video-preview {
+    .hover-preview.is-open {
       opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
+      visibility: visible;
     }
 
-    .video-preview-thumb {
+    .hover-preview-panel {
+      width: min(1040px, 92vw);
+      height: min(70vh, 620px);
+      display: grid;
+      grid-template-columns: minmax(260px, 45%) 1fr;
+      gap: 24px;
+      padding: 26px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(6, 10, 20, 0.97);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.6);
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.25s ease;
+    }
+
+    .hover-preview.is-open .hover-preview-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    .hover-preview-thumb {
       width: 100%;
       height: 100%;
       border-radius: 16px;
@@ -539,25 +552,25 @@ if ($metaTableReady) {
       padding: 10px;
     }
 
-    .video-preview-thumb img {
+    .hover-preview-thumb img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .video-preview-title {
-      font-size: 18px;
+    .hover-preview-title {
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
-    .video-preview-desc {
-      font-size: 14px;
+    .hover-preview-desc {
+      font-size: 15px;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.65;
       display: -webkit-box;
-      -webkit-line-clamp: 10;
+      -webkit-line-clamp: 12;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
