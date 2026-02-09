@@ -72,6 +72,33 @@ function nice_title_from_filename(string $fileName): string
             <div class="muted">Wrzuć pliki MP4 do folderu <b>/videos</b> przez FTP.</div>
         </div>
     <?php else: ?>
+        <section class="recent-section" id="recentSection" hidden>
+            <div class="recent-head">
+                <div>
+                    <h2 class="recent-title">Ostatnio ogladany</h2>
+                    <div class="recent-sub muted">Wznow od miejsca przerwania.</div>
+                </div>
+                <button type="button" class="btn btn-secondary" id="recentClear">Wyczysc</button>
+            </div>
+
+            <div class="recent-card" id="recentCard" tabindex="0" role="button" aria-label="Wznow ostatni film">
+                <div class="recent-thumb" id="recentThumb">
+                    <span>Brak miniatury</span>
+                </div>
+                <div class="recent-body">
+                    <div class="recent-name" id="recentTitle"></div>
+                    <div class="recent-desc" id="recentDesc"></div>
+                    <div class="recent-meta">
+                        <span class="pill" id="recentProgress"></span>
+                        <span class="muted" id="recentUpdated"></span>
+                    </div>
+                    <div class="recent-actions">
+                        <button type="button" class="btn" id="recentResume">Wznow</button>
+                        <button type="button" class="btn btn-secondary" id="recentStartOver">Od poczatku</button>
+                    </div>
+                </div>
+            </div>
+        </section>
         <div class="videos-grid" id="videosGrid">
             <?php foreach ($videos as $path): ?>
                 <?php
@@ -135,7 +162,7 @@ function nice_title_from_filename(string $fileName): string
                             src="<?= htmlspecialchars($url) ?>"
                             <?php if ($poster): ?>poster="<?= htmlspecialchars($poster) ?>" <?php endif; ?>
                             controls
-                            preload="metadata"></video>
+                            preload="none"></video>
                     </div>
 
                     <?php if (!empty($isAdmin)): ?>
@@ -243,9 +270,23 @@ function nice_title_from_filename(string $fileName): string
                 const input = document.getElementById('videoSearch');
                 const grid = document.getElementById('videosGrid');
                 const noResults = document.getElementById('noResults');
+                const recentSection = document.getElementById('recentSection');
+                const recentCard = document.getElementById('recentCard');
+                const recentThumb = document.getElementById('recentThumb');
+                const recentTitle = document.getElementById('recentTitle');
+                const recentDesc = document.getElementById('recentDesc');
+                const recentProgress = document.getElementById('recentProgress');
+                const recentUpdated = document.getElementById('recentUpdated');
+                const recentResume = document.getElementById('recentResume');
+                const recentStartOver = document.getElementById('recentStartOver');
+                const recentClear = document.getElementById('recentClear');
                 if (!grid) return;
 
                 const cards = Array.from(grid.querySelectorAll('.video-card'));
+                const RECENT_STORAGE_KEY = 'video_recent';
+                let currentOverlayData = null;
+                let recentData = null;
+                let lastSave = 0;
 
                 if (input) {
                     input.addEventListener('input', function() {
@@ -355,6 +396,7 @@ function nice_title_from_filename(string $fileName): string
                 const closeOverlay = (options = {}) => {
                     const skipHistory = options.skipHistory === true;
                     if (!overlay || !overlayVideo || !overlayOpen) return;
+                    saveRecentProgress('close');
                     if (!skipHistory && history.state && history.state.videoOverlay) {
                         history.back();
                         return;
@@ -400,22 +442,130 @@ function nice_title_from_filename(string $fileName): string
                     hoverPreviewThumb.innerHTML = '';
                 };
 
-                const openOverlay = (card) => {
-                    if (!overlay || !overlayVideo || !overlayTitle || !overlayDesc) return;
-                    hideHoverPreview();
-                    const title = card.dataset.title || '';
-                    const desc = card.dataset.desc || '';
-                    const videoSrc = card.dataset.video || '';
-                    const poster = card.dataset.poster || '';
+                const formatTime = (seconds) => {
+                    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+                    const total = Math.floor(seconds);
+                    const h = Math.floor(total / 3600);
+                    const m = Math.floor((total % 3600) / 60);
+                    const s = total % 60;
+                    if (h > 0) {
+                        return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    }
+                    return `${m}:${String(s).padStart(2, '0')}`;
+                };
 
-                    overlayTitle.textContent = title;
-                    overlayDesc.textContent = desc || 'Brak opisu.';
-                    overlayVideo.src = videoSrc;
-                    if (poster) {
-                        overlayVideo.setAttribute('poster', poster);
+                const readRecent = () => {
+                    try {
+                        const raw = localStorage.getItem(RECENT_STORAGE_KEY);
+                        if (!raw) return null;
+                        return JSON.parse(raw);
+                    } catch (err) {
+                        return null;
+                    }
+                };
+
+                const writeRecent = (data) => {
+                    try {
+                        localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(data));
+                    } catch (err) {
+                        // ignore storage errors
+                    }
+                };
+
+                const renderRecent = (data) => {
+                    if (!recentSection || !recentThumb || !recentTitle || !recentDesc || !recentProgress || !recentUpdated) return;
+                    if (!data || !data.video) {
+                        recentSection.setAttribute('hidden', 'hidden');
+                        return;
+                    }
+
+                    recentTitle.textContent = data.title || 'Bez tytulu';
+                    recentDesc.textContent = data.desc || 'Brak opisu.';
+                    const current = Number.isFinite(data.currentTime) ? data.currentTime : 0;
+                    const duration = Number.isFinite(data.duration) ? data.duration : 0;
+                    const progressText = duration > 0 ?
+                        `Wznow od ${formatTime(current)} / ${formatTime(duration)}` :
+                        `Wznow od ${formatTime(current)}`;
+                    recentProgress.textContent = progressText;
+
+                    if (data.updatedAt) {
+                        const updated = new Date(data.updatedAt);
+                        if (!Number.isNaN(updated.getTime())) {
+                            recentUpdated.textContent = `Ostatnio: ${updated.toLocaleString('pl-PL')}`;
+                        } else {
+                            recentUpdated.textContent = '';
+                        }
+                    } else {
+                        recentUpdated.textContent = '';
+                    }
+
+                    recentThumb.innerHTML = '';
+                    if (data.poster) {
+                        const img = document.createElement('img');
+                        img.src = data.poster;
+                        img.alt = data.title || 'Miniatura';
+                        recentThumb.appendChild(img);
+                    } else {
+                        const span = document.createElement('span');
+                        span.textContent = 'Brak miniatury';
+                        recentThumb.appendChild(span);
+                    }
+
+                    recentSection.removeAttribute('hidden');
+                };
+
+                const clearRecent = () => {
+                    recentData = null;
+                    try {
+                        localStorage.removeItem(RECENT_STORAGE_KEY);
+                    } catch (err) {
+                        // ignore storage errors
+                    }
+                    renderRecent(null);
+                };
+
+                const saveRecentProgress = (reason) => {
+                    if (!currentOverlayData || !overlayVideo) return;
+                    const now = Date.now();
+                    if (reason !== 'close' && reason !== 'force' && now - lastSave < 2000) return;
+                    lastSave = now;
+                    let currentTime = overlayVideo.currentTime || 0;
+                    const duration = overlayVideo.duration;
+                    if (Number.isFinite(duration) && duration > 0 && currentTime / duration > 0.98) {
+                        currentTime = 0;
+                    }
+                    const payload = {
+                        ...currentOverlayData,
+                        currentTime,
+                        duration: Number.isFinite(duration) ? duration : null,
+                        updatedAt: now
+                    };
+                    writeRecent(payload);
+                    recentData = payload;
+                    renderRecent(payload);
+                };
+
+                const openOverlayWithData = (data, options = {}) => {
+                    if (!overlay || !overlayVideo || !overlayTitle || !overlayDesc || !data) return;
+                    hideHoverPreview();
+                    const startAt = Number.isFinite(options.startAt) ? options.startAt : 0;
+
+                    overlayTitle.textContent = data.title || '';
+                    overlayDesc.textContent = data.desc || 'Brak opisu.';
+                    overlayVideo.src = data.video || '';
+                    if (data.poster) {
+                        overlayVideo.setAttribute('poster', data.poster);
                     } else {
                         overlayVideo.removeAttribute('poster');
                     }
+
+                    currentOverlayData = {
+                        title: data.title || '',
+                        desc: data.desc || '',
+                        video: data.video || '',
+                        poster: data.poster || ''
+                    };
+
                     overlayOpen = true;
                     if (!(history.state && history.state.videoOverlay)) {
                         history.pushState({
@@ -425,13 +575,45 @@ function nice_title_from_filename(string $fileName): string
                     overlay.classList.add('is-open');
                     overlay.setAttribute('aria-hidden', 'false');
                     overlay.scrollTop = 0;
-                    const playPromise = overlayVideo.play();
-                    if (playPromise && typeof playPromise.catch === 'function') {
-                        playPromise.catch(() => {});
+
+                    const handleLoaded = () => {
+                        if (startAt > 0 && overlayVideo.duration && startAt < overlayVideo.duration - 1) {
+                            try {
+                                overlayVideo.currentTime = startAt;
+                            } catch (err) {
+                                // ignore seek errors
+                            }
+                        }
+                        const playPromise = overlayVideo.play();
+                        if (playPromise && typeof playPromise.catch === 'function') {
+                            playPromise.catch(() => {});
+                        }
+                        if (tvMode) {
+                            requestVideoFullscreen(overlayVideo);
+                        }
+                    };
+
+                    if (overlayVideo.readyState >= 1) {
+                        handleLoaded();
+                    } else {
+                        overlayVideo.addEventListener('loadedmetadata', handleLoaded, {
+                            once: true
+                        });
                     }
-                    if (tvMode) {
-                        requestVideoFullscreen(overlayVideo);
-                    }
+                };
+
+                const openOverlay = (card) => {
+                    if (!card) return;
+                    const title = card.dataset.title || '';
+                    const desc = card.dataset.desc || '';
+                    const videoSrc = card.dataset.video || '';
+                    const poster = card.dataset.poster || '';
+                    openOverlayWithData({
+                        title,
+                        desc,
+                        video: videoSrc,
+                        poster
+                    });
                 };
 
                 cards.forEach(card => {
@@ -510,6 +692,62 @@ function nice_title_from_filename(string $fileName): string
                         requestVideoFullscreen(overlayVideo);
                     });
                 }
+
+                if (overlayVideo) {
+                    overlayVideo.addEventListener('timeupdate', () => saveRecentProgress('time'));
+                    overlayVideo.addEventListener('pause', () => saveRecentProgress('pause'));
+                    overlayVideo.addEventListener('ended', () => saveRecentProgress('ended'));
+                }
+
+                if (recentResume) {
+                    recentResume.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (!recentData) return;
+                        openOverlayWithData(recentData, {
+                            startAt: recentData.currentTime || 0
+                        });
+                    });
+                }
+
+                if (recentStartOver) {
+                    recentStartOver.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (!recentData) return;
+                        openOverlayWithData(recentData, {
+                            startAt: 0
+                        });
+                    });
+                }
+
+                if (recentCard) {
+                    recentCard.addEventListener('click', () => {
+                        if (!recentData) return;
+                        openOverlayWithData(recentData, {
+                            startAt: recentData.currentTime || 0
+                        });
+                    });
+                    recentCard.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            if (!recentData) return;
+                            openOverlayWithData(recentData, {
+                                startAt: recentData.currentTime || 0
+                            });
+                        }
+                    });
+                }
+
+                if (recentClear) {
+                    recentClear.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        clearRecent();
+                    });
+                }
+
+                window.addEventListener('pagehide', () => saveRecentProgress('close'));
+
+                recentData = readRecent();
+                renderRecent(recentData);
 
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') closeOverlay();

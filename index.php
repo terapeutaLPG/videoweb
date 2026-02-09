@@ -468,6 +468,110 @@ $iconUrl = $siteUrl . 'favicon.svg';
       margin-top: 6px;
     }
 
+    .recent-section {
+      margin-top: 12px;
+      margin-bottom: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .recent-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .recent-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .recent-sub {
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .recent-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 34%) 1fr;
+      gap: 18px;
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(12, 18, 30, 0.8);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .recent-card:hover,
+    .recent-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(57, 211, 255, 0.4);
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.45);
+      outline: none;
+    }
+
+    .recent-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: rgba(57, 211, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      place-items: center;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .recent-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .recent-body {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .recent-name {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .recent-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .recent-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+
+    .recent-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     .search-wrap {
       width: min(460px, 100%);
     }
@@ -1273,6 +1377,10 @@ $iconUrl = $siteUrl . 'favicon.svg';
 
       .search-wrap {
         width: 100%;
+      }
+
+      .recent-card {
+        grid-template-columns: 1fr;
       }
     }
 
