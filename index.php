@@ -1,9 +1,102 @@
 <?php
 require __DIR__ . '/db.php';
 $isAdmin = !empty($_SESSION['is_admin']);
+$actionMsg = '';
+$actionErr = '';
 
-// jedna nazwa sesji wszędzie
-#$isAdmin = !empty($_SESSION['is_admin']);
+if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
+  $action = $_POST['action'] ?? '';
+  $file = basename($_POST['file'] ?? '');
+  $videoDirFs = __DIR__ . '/videos';
+  $thumbDirFs = __DIR__ . '/thumbnails';
+
+  if (!is_dir($thumbDirFs)) {
+    @mkdir($thumbDirFs, 0755, true);
+  }
+  if (!is_dir($thumbDirFs) || !is_writable($thumbDirFs)) {
+    $actionErr = 'Brak zapisu do katalogu /thumbnails.';
+  } else {
+    $videoPath = $videoDirFs . '/' . $file;
+    $baseName = pathinfo($file, PATHINFO_FILENAME);
+
+    if (!is_file($videoPath)) {
+      $actionErr = 'Nie znaleziono pliku wideo.';
+    } else {
+      if ($action === 'rename') {
+        $new = trim($_POST['new_name'] ?? '');
+        $new = preg_replace('/[^A-Za-z0-9 _-]/', '', $new);
+        $new = trim(preg_replace('/\s+/', ' ', $new));
+        if ($new === '') {
+          $actionErr = 'Nowa nazwa jest pusta.';
+        } else {
+          $newFile = $new . '.mp4';
+          $newPath = $videoDirFs . '/' . $newFile;
+          if (is_file($newPath)) {
+            $actionErr = 'Plik o tej nazwie już istnieje.';
+          } elseif (@rename($videoPath, $newPath)) {
+            foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+              $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
+              if (is_file($oldThumb)) {
+                @rename($oldThumb, $thumbDirFs . '/' . $new . '.' . $ext);
+              }
+            }
+            $actionMsg = 'Zmieniono nazwę pliku.';
+          } else {
+            $actionErr = 'Nie udało się zmienić nazwy.';
+          }
+        }
+      } elseif ($action === 'delete') {
+        if (@unlink($videoPath)) {
+          foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+            $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
+            if (is_file($oldThumb)) @unlink($oldThumb);
+          }
+          $actionMsg = 'Usunięto plik.';
+        } else {
+          $actionErr = 'Nie udało się usunąć pliku.';
+        }
+      } elseif ($action === 'thumb') {
+        $f = $_FILES['thumb'] ?? null;
+        if (!$f) {
+          $actionErr = 'Brak pliku miniaturki.';
+        } elseif ($f['error'] !== UPLOAD_ERR_OK) {
+          $errMap = [
+            UPLOAD_ERR_INI_SIZE => 'Plik za duży (limit serwera).',
+            UPLOAD_ERR_FORM_SIZE => 'Plik za duży (limit formularza).',
+            UPLOAD_ERR_PARTIAL => 'Plik wysłany częściowo.',
+            UPLOAD_ERR_NO_FILE => 'Nie wybrano pliku.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Brak katalogu tymczasowego.',
+            UPLOAD_ERR_CANT_WRITE => 'Brak zapisu na dysku.',
+            UPLOAD_ERR_EXTENSION => 'Upload zablokowany przez rozszerzenie.',
+          ];
+          $actionErr = $errMap[$f['error']] ?? 'Błąd uploadu miniaturki.';
+        } else {
+          $finfo = new finfo(FILEINFO_MIME_TYPE);
+          $mime = $finfo->file($f['tmp_name']);
+          $map = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+          ];
+          if (!isset($map[$mime])) {
+            $actionErr = 'Dozwolone formaty: JPG/PNG/WEBP.';
+          } else {
+            foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+              $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
+              if (is_file($oldThumb)) @unlink($oldThumb);
+            }
+            $dest = $thumbDirFs . '/' . $baseName . '.' . $map[$mime];
+            if (@move_uploaded_file($f['tmp_name'], $dest)) {
+              $actionMsg = 'Dodano miniaturkę.';
+            } else {
+              $actionErr = 'Nie udało się zapisać miniaturki.';
+            }
+          }
+        }
+      }
+    }
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -24,7 +117,7 @@ $isAdmin = !empty($_SESSION['is_admin']);
       --link: #93c5fd;
       --linkBg: rgba(147, 197, 253, 0.12);
       --dangerBg: rgba(239, 68, 68, 0.12);
-      --dangerBd: rgba(239, 68, 68, 0.25);
+      --dangerBd: rgba(239, 68, 66, 0.25);
       --radius: 14px;
     }
 
@@ -390,13 +483,23 @@ $isAdmin = !empty($_SESSION['is_admin']);
     }
 
     .video-media {
+      position: relative;
       background: #000;
     }
 
-    .video-card video {
+    .video-poster {
+      position: absolute;
+      inset: 0;
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
       display: block;
+      transition: opacity .2s ease;
+    }
+
+    .video-media.playing .video-poster {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .video-meta {
@@ -472,6 +575,7 @@ $isAdmin = !empty($_SESSION['is_admin']);
 </head>
 
 <body>
+  <?php include __DIR__ . '/partials/header.php'; ?>
   <div class="container">
     <?php if ($isAdmin): ?>
       <?php include __DIR__ . '/partials/admin_panel.php'; ?>
@@ -484,6 +588,14 @@ $isAdmin = !empty($_SESSION['is_admin']);
     <?php include __DIR__ . '/partials/login_form.php'; ?>
   <?php endif; ?>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const btn = document.getElementById('openLogin');
+      if (btn && typeof openLoginModal === 'function') {
+        btn.addEventListener('click', openLoginModal);
+      }
+    });
+  </script>
 
 </body>
 

@@ -1,5 +1,19 @@
 <?php
 $videoDirFs = __DIR__ . '/../videos';
+$thumbDirFs = __DIR__ . '/../thumbnails';
+$thumbDirUrl = '/thumbnails';
+
+function find_thumbnail_url(string $fileName, string $thumbDirFs, string $thumbDirUrl): string
+{
+    $base = pathinfo($fileName, PATHINFO_FILENAME);
+    foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+        $fs = $thumbDirFs . '/' . $base . '.' . $ext;
+        if (is_file($fs)) {
+            return $thumbDirUrl . '/' . rawurlencode($base . '.' . $ext);
+        }
+    }
+    return '';
+}
 
 $videos = [];
 if (is_dir($videoDirFs)) {
@@ -60,9 +74,13 @@ function nice_title_from_filename(string $fileName): string
                 $url = video_public_url($file);
                 $lower = mb_strtolower($title);
                 $date = date('Y-m-d H:i', filemtime($path));
+                $poster = find_thumbnail_url($file, $thumbDirFs, $thumbDirUrl);
                 ?>
                 <article class="video-card" data-title="<?= htmlspecialchars($lower) ?>">
                     <div class="video-media">
+                        <?php if ($poster): ?>
+                            <img class="video-poster" src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>">
+                        <?php endif; ?>
                         <video src="<?= htmlspecialchars($url) ?>" controls preload="metadata"></video>
                     </div>
 
@@ -81,6 +99,31 @@ function nice_title_from_filename(string $fileName): string
                                 </span>
                             <?php endif; ?>
                         </div>
+
+                        <?php if (!empty($isAdmin)): ?>
+                            <div class="video-info" style="margin-top:8px;">
+                                <form method="post" action="/index.php" style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <input type="hidden" name="action" value="rename">
+                                    <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
+                                    <input type="text" name="new_name" placeholder="Nowa nazwa" style="flex:1; min-width:140px;">
+                                    <button type="submit">Zmień nazwę</button>
+                                </form>
+
+                                <form method="post" action="/index.php" style="margin-top:8px;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
+                                    <button type="submit" onclick="return confirm('Usunąć plik?')">Usuń</button>
+                                </form>
+
+                                <form method="post" action="/index.php" enctype="multipart/form-data" style="margin-top:8px;">
+                                    <input type="hidden" name="action" value="thumb">
+                                    <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
+                                    <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
+                                    <input type="file" name="thumb" accept="image/*" required>
+                                    <button type="submit">Dodaj miniaturę</button>
+                                </form>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -115,6 +158,17 @@ function nice_title_from_filename(string $fileName): string
                 }
 
                 input.addEventListener('input', applyFilter);
+
+                const medias = document.querySelectorAll('.video-media');
+                medias.forEach(media => {
+                    const video = media.querySelector('video');
+                    const poster = media.querySelector('.video-poster');
+                    if (!video || !poster) return;
+
+                    video.addEventListener('play', () => media.classList.add('playing'));
+                    video.addEventListener('pause', () => media.classList.remove('playing'));
+                    video.addEventListener('ended', () => media.classList.remove('playing'));
+                });
             })();
         </script>
     <?php endif; ?>
