@@ -1,12 +1,12 @@
 <?php $isAdmin = !empty($isAdmin); ?>
 <header class="topbar">
   <div class="topbar-left">
-    <div class="topbar-title">
+    <a class="topbar-title" href="/index.php" aria-label="Strona glowna">
       Filmy PL
       <?php if ($isAdmin): ?>
         <span class="admin-badge">Admin</span>
       <?php endif; ?>
-    </div>
+    </a>
     <div class="topbar-sub">Biblioteka wideo</div>
   </div>
 

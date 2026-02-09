@@ -190,7 +190,7 @@ if ($metaTableReady) {
     }
 
     body {
-      min-height: 100vh;
+      min-height: calc(100vh + 160px);
       color: var(--text);
       font-family: "Manrope", "Segoe UI", sans-serif;
       background:
