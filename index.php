@@ -145,6 +145,13 @@ if ($metaTableReady) {
     $videoDescriptions[$row['file_name']] = $row['description'];
   }
 }
+
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$basePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/'), '/');
+$siteUrl = $scheme . '://' . $host . ($basePath ? $basePath . '/' : '/');
+$ogImageUrl = $siteUrl . 'og-image.svg';
+$iconUrl = $siteUrl . 'favicon.svg';
 ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -153,6 +160,21 @@ if ($metaTableReady) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Filmy PL</title>
+  <meta name="description" content="Biblioteka wideo Filmy PL.">
+  <link rel="icon" href="<?php echo htmlspecialchars($iconUrl, ENT_QUOTES); ?>" type="image/svg+xml">
+  <link rel="shortcut icon" href="<?php echo htmlspecialchars($iconUrl, ENT_QUOTES); ?>">
+  <meta property="og:title" content="Filmy PL">
+  <meta property="og:description" content="Biblioteka wideo Filmy PL.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="<?php echo htmlspecialchars($siteUrl, ENT_QUOTES); ?>">
+  <meta property="og:image" content="<?php echo htmlspecialchars($ogImageUrl, ENT_QUOTES); ?>">
+  <meta property="og:image:type" content="image/svg+xml">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Filmy PL">
+  <meta name="twitter:description" content="Biblioteka wideo Filmy PL.">
+  <meta name="twitter:image" content="<?php echo htmlspecialchars($ogImageUrl, ENT_QUOTES); ?>">
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
