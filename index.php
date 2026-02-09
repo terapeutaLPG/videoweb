@@ -71,7 +71,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
           ];
           $actionErr = $errMap[$f['error']] ?? 'Błąd uploadu miniaturki.';
         } else {
-          if (!isset($f['tmp_name']) || !is_uploaded_file($f['tmp_name'])) {
+          if (!isset($f['tmp_name']) || !is_string($f['tmp_name']) || !is_uploaded_file($f['tmp_name'])) {
             $actionErr = 'Nieprawidłowy plik.';
           } else {
             $finfo = new finfo(FILEINFO_MIME_TYPE);
