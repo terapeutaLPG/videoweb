@@ -31,18 +31,18 @@ unset($_SESSION['login_error']);
 </div>
 
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('loginModal');
   const openBtn = document.getElementById('openLogin');
   const closeBtn = document.getElementById('closeLogin');
 
+  if (!modal) return;
+
   function openModal() {
-    if (!modal) return;
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
   }
   function closeModal() {
-    if (!modal) return;
     modal.classList.remove('show');
     modal.setAttribute('aria-hidden', 'true');
   }
@@ -50,17 +50,16 @@ unset($_SESSION['login_error']);
   if (openBtn) openBtn.addEventListener('click', openModal);
   if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
-    });
-  }
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
 
   // jeśli był błąd logowania, pokaż modal automatycznie
   const hasError = <?= $loginError ? 'true' : 'false' ?>;
   if (hasError) openModal();
-})();
+});
 </script>

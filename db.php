@@ -1,4 +1,13 @@
 <?php
+// Konfiguracja sesji dla home.pl
+$sessionPath = __DIR__ . '/sessions';
+if (!is_dir($sessionPath)) {
+    @mkdir($sessionPath, 0700, true);
+}
+if (is_dir($sessionPath) && is_writable($sessionPath)) {
+    session_save_path($sessionPath);
+}
+
 $dbHost = 'mysql8';
 $dbName = '40618186_filmy';
 $dbUser = '40618186_filmy';

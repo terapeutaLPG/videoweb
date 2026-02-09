@@ -10,7 +10,7 @@ $isAdmin = !empty($_SESSION['is_admin']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moja Walentynka</title>
+  <title>Filmy PL</title>
 
   <style>
     :root{
@@ -235,6 +235,160 @@ $isAdmin = !empty($_SESSION['is_admin']);
       .topbar{ padding: 14px 16px; }
       .videos-grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
     }
+     /* tło i ogólny vibe */
+     body{
+     background:
+     radial-gradient(900px 600px at 15% 10%, rgba(147,197,253,0.18), transparent 55%),
+     radial-gradient(900px 600px at 85% 15%, rgba(34,197,94,0.12), transparent 55%),
+     radial-gradient(900px 600px at 50% 95%, rgba(244,114,182,0.10), transparent 55%),
+     #0f172a;
+     }
+
+     /* topbar lekko "szklany" */
+     .topbar{
+     background: rgba(11,18,36,0.72);
+     backdrop-filter: blur(10px);
+     position: sticky;
+     top: 0;
+     z-index: 50;
+     }
+
+     /* wspólne drobiazgi */
+     .pill{
+     display:inline-flex;
+     align-items:center;
+     gap:8px;
+     padding: 6px 10px;
+     border-radius: 999px;
+     border: 1px solid rgba(255,255,255,0.10);
+     background: rgba(255,255,255,0.06);
+     font-size: 12px;
+     color: #e5e7eb;
+     }
+     .dot{ opacity: .55; margin: 0 6px; }
+     .muted{ color: #9ca3af; }
+
+     /* sekcja filmów */
+     .videos-section{
+     margin-top: 14px;
+     }
+     .videos-head{
+     display:flex;
+     align-items:flex-end;
+     justify-content:space-between;
+     gap: 12px;
+     margin-bottom: 14px;
+     }
+     .videos-title{
+     font-size: 22px;
+     letter-spacing: .2px;
+     }
+     .videos-sub{
+     margin-top: 6px;
+     font-size: 13px;
+     color: #9ca3af;
+     }
+
+     /* search */
+     .search-wrap{ width: min(420px, 100%); }
+     .search-input{
+     width: 100%;
+     padding: 10px 12px;
+     border-radius: 14px;
+     border: 1px solid rgba(255,255,255,0.12);
+     background: rgba(15,23,42,0.70);
+     color: #e5e7eb;
+     outline: none;
+     }
+     .search-input:focus{
+     border-color: rgba(147,197,253,0.35);
+     box-shadow: 0 0 0 3px rgba(147,197,253,0.12);
+     }
+
+     /* grid */
+     .videos-grid{
+     display:grid;
+     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+     gap: 16px;
+     }
+
+     /* karty */
+     .video-card{
+     border-radius: 16px;
+     overflow:hidden;
+     border: 1px solid rgba(255,255,255,0.08);
+     background: rgba(11,18,36,0.75);
+     transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+     }
+     .video-card:hover{
+     transform: translateY(-2px);
+     border-color: rgba(147,197,253,0.20);
+     box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+     }
+
+     .video-media{
+     background: #000;
+     }
+     .video-card video{
+     width: 100%;
+     height: auto;
+     display:block;
+     }
+
+     .video-meta{
+     padding: 12px 12px 14px;
+     }
+
+     .video-name{
+     font-weight: 700;
+     font-size: clamp(13px, 1.6vw, 15px);
+     line-height: 1.25;
+     margin-bottom: 8px;
+
+     /* max 2 linie */
+     display: -webkit-box;
+     -webkit-line-clamp: 2;
+     -webkit-box-orient: vertical;
+     overflow: hidden;
+     word-break: break-word;
+     }
+
+     .video-info{
+     display:flex;
+     align-items:center;
+     gap: 6px;
+     font-size: 12px;
+     color: #9ca3af;
+     overflow:hidden;
+     }
+     .video-info span{
+     overflow:hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+     }
+
+     /* empty states */
+     .empty{
+     border-radius: 16px;
+     border: 1px dashed rgba(255,255,255,0.16);
+     background: rgba(11,18,36,0.55);
+     padding: 18px;
+     }
+     .empty-title{
+     font-weight: 800;
+     margin-bottom: 6px;
+     }
+
+     /* mobile */
+     @media (max-width: 720px){
+     .videos-head{ flex-direction: column; align-items: stretch; }
+     .search-wrap{ width: 100%; }
+     .videos-grid{ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+     }
+     .modal-backdrop{ z-index: 999999; }
+     .modal{ position: relative; }
+
+
   </style>
 </head>
 
