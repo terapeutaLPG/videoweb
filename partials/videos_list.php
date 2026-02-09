@@ -244,9 +244,66 @@ function nice_title_from_filename(string $fileName): string
                 const overlayDesc = document.getElementById('overlayDesc');
                 const overlayVideo = document.getElementById('overlayVideo');
                 const overlayFullscreen = document.getElementById('overlayFullscreen');
+                const tvToggle = document.getElementById('tvToggle');
 
-                const closeOverlay = () => {
-                    if (!overlay || !overlayVideo) return;
+                const TV_STORAGE_KEY = 'video_tv_mode';
+                const baseUrl = window.location.pathname + window.location.search;
+                let tvMode = false;
+                let overlayOpen = false;
+
+                const applyTvMode = (enabled) => {
+                    tvMode = enabled;
+                    if (!tvToggle) return;
+                    tvToggle.classList.toggle('is-on', enabled);
+                    tvToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+                };
+
+                const loadTvMode = () => {
+                    let saved = false;
+                    try {
+                        saved = localStorage.getItem(TV_STORAGE_KEY) === '1';
+                    } catch (err) {
+                        saved = false;
+                    }
+                    applyTvMode(saved);
+                };
+
+                if (tvToggle) {
+                    loadTvMode();
+                    tvToggle.addEventListener('click', () => {
+                        const next = !tvMode;
+                        applyTvMode(next);
+                        try {
+                            localStorage.setItem(TV_STORAGE_KEY, next ? '1' : '0');
+                        } catch (err) {
+                            // ignore storage errors
+                        }
+                    });
+                } else {
+                    loadTvMode();
+                }
+
+                const requestVideoFullscreen = (video) => {
+                    if (!video) return;
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    } else if (video.webkitRequestFullscreen) {
+                        video.webkitRequestFullscreen();
+                    } else if (video.webkitEnterFullscreen) {
+                        video.webkitEnterFullscreen();
+                    } else if (video.msRequestFullscreen) {
+                        video.msRequestFullscreen();
+                    }
+                };
+
+                const closeOverlay = (options = {}) => {
+                    const skipHistory = options.skipHistory === true;
+                    if (!overlay || !overlayVideo || !overlayOpen) return;
+                    if (!skipHistory && history.state && history.state.videoOverlay) {
+                        history.back();
+                        return;
+                    }
+                    overlayOpen = false;
                     overlay.classList.remove('is-open');
                     overlay.setAttribute('aria-hidden', 'true');
                     overlayVideo.pause();
@@ -270,10 +327,22 @@ function nice_title_from_filename(string $fileName): string
                     } else {
                         overlayVideo.removeAttribute('poster');
                     }
+                    overlayOpen = true;
+                    if (!(history.state && history.state.videoOverlay)) {
+                        history.pushState({
+                            videoOverlay: true
+                        }, '', baseUrl + '#watch');
+                    }
                     overlay.classList.add('is-open');
                     overlay.setAttribute('aria-hidden', 'false');
                     overlay.scrollTop = 0;
-                    overlayVideo.play();
+                    const playPromise = overlayVideo.play();
+                    if (playPromise && typeof playPromise.catch === 'function') {
+                        playPromise.catch(() => {});
+                    }
+                    if (tvMode) {
+                        requestVideoFullscreen(overlayVideo);
+                    }
                 };
 
                 cards.forEach(card => {
@@ -310,17 +379,15 @@ function nice_title_from_filename(string $fileName): string
                     });
                 }
 
+                window.addEventListener('popstate', () => {
+                    if (overlayOpen) closeOverlay({
+                        skipHistory: true
+                    });
+                });
+
                 if (overlayFullscreen && overlayVideo) {
                     overlayFullscreen.addEventListener('click', () => {
-                        if (overlayVideo.requestFullscreen) {
-                            overlayVideo.requestFullscreen();
-                        } else if (overlayVideo.webkitRequestFullscreen) {
-                            overlayVideo.webkitRequestFullscreen();
-                        } else if (overlayVideo.webkitEnterFullscreen) {
-                            overlayVideo.webkitEnterFullscreen();
-                        } else if (overlayVideo.msRequestFullscreen) {
-                            overlayVideo.msRequestFullscreen();
-                        }
+                        requestVideoFullscreen(overlayVideo);
                     });
                 }
 

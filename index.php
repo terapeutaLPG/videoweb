@@ -302,6 +302,28 @@ if ($metaTableReady) {
       font: inherit;
     }
 
+    .tv-toggle {
+      gap: 6px;
+      padding: 7px 10px;
+    }
+
+    .tv-toggle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .tv-label {
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .tv-toggle.is-on {
+      border-color: rgba(57, 211, 255, 0.55);
+      background: rgba(57, 211, 255, 0.2);
+      box-shadow: 0 0 0 2px rgba(57, 211, 255, 0.12) inset;
+    }
+
     .topbar-link:hover {
       transform: translateY(-1px);
       border-color: rgba(57, 211, 255, 0.35);
