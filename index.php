@@ -500,19 +500,19 @@ if ($metaTableReady) {
 
     .video-preview {
       position: absolute;
-      left: 14px;
-      right: 14px;
-      bottom: 14px;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
       display: grid;
-      grid-template-columns: 78px 1fr;
-      gap: 12px;
-      padding: 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(8, 12, 22, 0.92);
-      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+      grid-template-columns: 160px 1fr;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(6, 10, 20, 0.94);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
       opacity: 0;
-      transform: translateY(10px) scale(0.98);
+      transform: translateY(12px) scale(0.98);
       pointer-events: none;
       transition: opacity 0.25s ease, transform 0.25s ease;
       z-index: 4;
@@ -524,18 +524,18 @@ if ($metaTableReady) {
     }
 
     .video-preview-thumb {
-      width: 78px;
-      height: 58px;
-      border-radius: 10px;
+      width: 160px;
+      height: 100px;
+      border-radius: 12px;
       overflow: hidden;
       background: rgba(57, 211, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.12);
       display: grid;
       place-items: center;
       color: rgba(255, 255, 255, 0.7);
-      font-size: 11px;
+      font-size: 12px;
       text-align: center;
-      padding: 6px;
+      padding: 8px;
     }
 
     .video-preview-thumb img {
@@ -546,17 +546,17 @@ if ($metaTableReady) {
     }
 
     .video-preview-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .video-preview-desc {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.4;
+      line-height: 1.5;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 4;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }

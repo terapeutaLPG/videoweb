@@ -430,8 +430,11 @@ function nice_title_from_filename(string $fileName): string
                         }, 4000);
                     };
 
-                    card.addEventListener('pointerenter', schedulePreview);
-                    card.addEventListener('pointerleave', clearPreview);
+                    if (media) {
+                        media.addEventListener('pointerenter', schedulePreview);
+                        media.addEventListener('pointerleave', clearPreview);
+                        media.addEventListener('pointerdown', clearPreview);
+                    }
                     card.addEventListener('pointerdown', clearPreview);
 
                     card.addEventListener('keydown', (e) => {
