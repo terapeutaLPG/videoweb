@@ -132,6 +132,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      letter-spacing: 0.1px;
     }
 
     .container {
@@ -148,6 +149,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       padding: 16px 24px;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     }
 
     .topbar-title {
@@ -156,6 +158,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       display: flex;
       align-items: center;
       gap: 10px;
+      text-transform: none;
     }
 
     .admin-badge {
@@ -167,15 +170,19 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       color: #86efac;
     }
 
-    a.topbar-link {
+    a.topbar-link,
+    button.topbar-link {
       color: var(--link);
       text-decoration: none;
       padding: 8px 10px;
       border-radius: 10px;
+      border: 1px solid transparent;
     }
 
-    a.topbar-link:hover {
+    a.topbar-link:hover,
+    button.topbar-link:hover {
       background: var(--linkBg);
+      border-color: rgba(147, 197, 253, 0.35);
     }
 
     /* jeśli w header.php masz button zamiast <a>, to ten CSS zachowa wygląd */
@@ -201,6 +208,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       border-radius: var(--radius);
       padding: 14px;
       margin: 14px 0;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
     }
 
     .muted {
@@ -300,6 +308,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       border: 1px solid rgba(255, 255, 255, 0.10);
       border-radius: var(--radius);
       padding: 14px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
     }
 
     .modal-head {
@@ -452,7 +461,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       border: 1px solid rgba(255, 255, 255, 0.12);
       background: rgba(15, 23, 42, 0.70);
       color: #e5e7eb;
-      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
     }
 
     .search-input:focus {
@@ -571,6 +580,106 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
     .modal {
       position: relative;
     }
+
+    /* === premium UI layer (override) === */
+    .topbar {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    }
+
+    .topbar-title {
+      font-size: 19px;
+      letter-spacing: .3px;
+    }
+
+    .topbar-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      font-weight: 500;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, .9), rgba(11, 18, 36, .85));
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .videos-grid {
+      gap: 18px;
+    }
+
+    .video-card {
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(11, 18, 36, .9), rgba(11, 18, 36, .65));
+    }
+
+    .video-meta {
+      display: grid;
+      gap: 8px;
+    }
+
+    .video-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(147, 197, 253, 0.20);
+      color: #e5e7eb;
+      cursor: pointer;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(147, 197, 253, 0.28);
+      border-color: rgba(147, 197, 253, 0.35);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .input,
+    .file-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 23, 42, 0.7);
+      color: #e5e7eb;
+    }
+
+    .modal-backdrop {
+      backdrop-filter: blur(6px);
+    }
+
+    .modal {
+      border-radius: 16px;
+    }
+
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 36px;
+      color: rgba(255, 255, 255, 0.85);
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55));
+      pointer-events: none;
+    }
+
+    .video-media.playing .video-overlay {
+      opacity: 0;
+    }
   </style>
 </head>
 
@@ -593,6 +702,11 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       const btn = document.getElementById('openLogin');
       if (btn && typeof openLoginModal === 'function') {
         btn.addEventListener('click', openLoginModal);
+      }
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && typeof closeLoginModal === 'function') {
+        closeLoginModal();
       }
     });
   </script>

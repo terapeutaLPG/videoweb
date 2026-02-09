@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: text/html; charset=UTF-8');
 require __DIR__ . '/db.php';
 $isAdmin = !empty($_SESSION['is_admin']);
 

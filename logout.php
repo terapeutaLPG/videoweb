@@ -1,4 +1,5 @@
 <?php
+header('Cache-Control: no-store, no-cache, must-revalidate');
 require __DIR__ . '/db.php';
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {

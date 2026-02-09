@@ -4,44 +4,36 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 ?>
 
-<div id="loginModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeLoginModal()">&times;</span>
+<div id="loginModal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Logowanie">
+    <div class="modal-content">
+      <span class="close" onclick="closeLoginModal()">&times;</span>
 
-    <h2>Logowanie</h2>
+      <h2>Logowanie</h2>
 
-    <?php if (!empty($_SESSION['login_error'])): ?>
-      <div class="login-error">
-        <?php
-        echo $_SESSION['login_error'];
-        unset($_SESSION['login_error']);
-        ?>
-      </div>
-    <?php endif; ?>
+      <?php if (!empty($_SESSION['login_error'])): ?>
+        <div class="login-error">
+          <?php
+          echo $_SESSION['login_error'];
+          unset($_SESSION['login_error']);
+          ?>
+        </div>
+      <?php endif; ?>
 
-    <form action="login.php" method="post">
-      <div class="form-group">
-        <label for="username">Login</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          required>
-      </div>
+      <form action="login.php" method="post">
+        <div class="form-group">
+          <label for="username">Login</label>
+          <input type="text" id="username" name="username" class="input" required>
+        </div>
 
-      <div class="form-group">
-        <label for="password">Hasło</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          required>
-      </div>
+        <div class="form-group">
+          <label for="password">Hasło</label>
+          <input type="password" id="password" name="password" class="input" required>
+        </div>
 
-      <button type="submit" class="login-btn">
-        Zaloguj
-      </button>
-    </form>
+        <button type="submit" class="btn">Zaloguj</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -61,6 +53,11 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
       modal.setAttribute('aria-hidden', 'true');
     }
   }
+
+  document.addEventListener('click', function(e) {
+    const modal = document.getElementById('loginModal');
+    if (modal && e.target === modal) closeLoginModal();
+  });
 </script>
 
 <?php if (!empty($_SESSION['is_admin'])): ?>

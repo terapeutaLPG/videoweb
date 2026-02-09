@@ -10,6 +10,7 @@ if (is_dir($sessionPath) && is_writable($sessionPath)) {
 
 // Ustawienia sesji i start (jeśli jeszcze nie uruchomiona)
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    ini_set('session.use_strict_mode', '1');
     session_name('VIDEOWEBSESSID');
     session_set_cookie_params([
         'lifetime' => 0,

@@ -81,6 +81,7 @@ function nice_title_from_filename(string $fileName): string
                         <?php if ($poster): ?>
                             <img class="video-poster" src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>">
                         <?php endif; ?>
+                        <div class="video-overlay">▶</div>
                         <video src="<?= htmlspecialchars($url) ?>" controls preload="metadata"></video>
                     </div>
 
@@ -101,26 +102,26 @@ function nice_title_from_filename(string $fileName): string
                         </div>
 
                         <?php if (!empty($isAdmin)): ?>
-                            <div class="video-info" style="margin-top:8px;">
-                                <form method="post" action="/index.php" style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <div class="video-actions">
+                                <form method="post" action="/index.php" class="video-form" style="display:flex; gap:8px; flex-wrap:wrap;">
                                     <input type="hidden" name="action" value="rename">
                                     <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
-                                    <input type="text" name="new_name" placeholder="Nowa nazwa" style="flex:1; min-width:140px;">
-                                    <button type="submit">Zmień nazwę</button>
+                                    <input type="text" name="new_name" class="input" placeholder="Nowa nazwa">
+                                    <button type="submit" class="btn">Zmień nazwę</button>
                                 </form>
 
-                                <form method="post" action="/index.php" style="margin-top:8px;">
+                                <form method="post" action="/index.php" class="video-form">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
-                                    <button type="submit" onclick="return confirm('Usunąć plik?')">Usuń</button>
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Usunąć plik?')">Usuń</button>
                                 </form>
 
-                                <form method="post" action="/index.php" enctype="multipart/form-data" style="margin-top:8px;">
+                                <form method="post" action="/index.php" enctype="multipart/form-data" class="video-form">
                                     <input type="hidden" name="action" value="thumb">
                                     <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
                                     <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
-                                    <input type="file" name="thumb" accept="image/*" required>
-                                    <button type="submit">Dodaj miniaturę</button>
+                                    <input type="file" name="thumb" class="file-input" accept="image/*" required>
+                                    <button type="submit" class="btn btn-secondary">Dodaj miniaturę</button>
                                 </form>
                             </div>
                         <?php endif; ?>

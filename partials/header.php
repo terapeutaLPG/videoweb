@@ -1,7 +1,8 @@
 <?php $isAdmin = !empty($isAdmin); ?>
 <header class="topbar">
   <div class="topbar-title">
-    Moja Walentynka
+    Filmy PL
+    <span class="topbar-sub">biblioteka wideo</span>
     <?php if ($isAdmin): ?>
       <span class="admin-badge">ADMIN</span>
     <?php endif; ?>

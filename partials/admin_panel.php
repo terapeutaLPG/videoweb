@@ -4,7 +4,7 @@ $actionErr = $actionErr ?? '';
 ?>
 
 <section class="card">
-    <h2>Panel admina</h2>
+    <h2 class="section-title">Panel admina</h2>
     <p class="muted">Aby dodac film, wrzuc plik MP4 do katalogu <b>/videos</b> przez FTP.</p>
     <p class="muted">Na kartach filmow ponizej masz opcje: zmiana nazwy, ustawienie miniaturki, usuwanie.</p>
     <p class="muted">Miniaturki: JPG/PNG/WEBP (upload przy filmie).</p>
