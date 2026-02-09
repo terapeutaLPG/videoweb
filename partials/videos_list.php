@@ -46,17 +46,23 @@ function nice_title_from_filename(string $fileName): string
             <div class="videos-sub">
                 <span class="pill"><?= count($videos) ?> pozycji</span>
                 <span class="dot">•</span>
-                <span class="muted">wpisz, żeby filtrować</span>
+                <span class="muted">Wpisz, aby filtrowac</span>
             </div>
         </div>
 
         <div class="search-wrap">
-            <input
-                id="videoSearch"
-                class="search-input"
-                type="text"
-                placeholder="Szukaj po nazwie filmu..."
-                autocomplete="off">
+            <div class="search-field">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20l-3.5-3.5" />
+                </svg>
+                <input
+                    id="videoSearch"
+                    class="search-input"
+                    type="text"
+                    placeholder="Szukaj po nazwie filmu..."
+                    autocomplete="off">
+            </div>
         </div>
     </div>
 
@@ -78,11 +84,26 @@ function nice_title_from_filename(string $fileName): string
                 ?>
                 <article class="video-card" data-title="<?= htmlspecialchars($lower) ?>">
                     <div class="video-media">
+                        <div class="video-badge">HD</div>
                         <?php if ($poster): ?>
                             <img class="video-poster" src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>">
+                        <?php else: ?>
+                            <div class="video-placeholder" aria-hidden="true">
+                                <div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                                        <path d="M8 15l3-3 3 3 2-2 2 2" />
+                                    </svg>
+                                    <span>Brak miniatury</span>
+                                </div>
+                            </div>
                         <?php endif; ?>
-                        <div class="video-overlay">▶</div>
-                        <video src="<?= htmlspecialchars($url) ?>" controls preload="metadata"></video>
+                        <button type="button" class="video-play" aria-label="Odtworz">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M8 5l11 7-11 7V5z" />
+                            </svg>
+                            Odtworz
+                        </button>
                     </div>
 
                     <div class="video-meta">
@@ -100,32 +121,56 @@ function nice_title_from_filename(string $fileName): string
                                 </span>
                             <?php endif; ?>
                         </div>
+                    </div>
 
-                        <?php if (!empty($isAdmin)): ?>
-                            <div class="video-actions">
-                                <form method="post" action="/index.php" class="video-form" style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    <input type="hidden" name="action" value="rename">
-                                    <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
-                                    <input type="text" name="new_name" class="input" placeholder="Nowa nazwa">
-                                    <button type="submit" class="btn">Zmień nazwę</button>
-                                </form>
+                    <div class="video-player">
+                        <video
+                            src="<?= htmlspecialchars($url) ?>"
+                            <?php if ($poster): ?>poster="<?= htmlspecialchars($poster) ?>"<?php endif; ?>
+                            controls
+                            preload="metadata"></video>
+                    </div>
 
-                                <form method="post" action="/index.php" class="video-form">
+                    <?php if (!empty($isAdmin)): ?>
+                        <div class="video-actions">
+                            <form method="post" action="/index.php" class="video-form">
+                                <div class="admin-group">
+                                    <div class="admin-group-title">Zmien nazwe</div>
+                                    <div class="admin-row">
+                                        <input type="hidden" name="action" value="rename">
+                                        <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
+                                        <input type="text" name="new_name" class="input" placeholder="Nowa nazwa">
+                                        <button type="submit" class="btn">Zmien nazwe</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <form method="post" action="/index.php" enctype="multipart/form-data" class="video-form">
+                                <div class="admin-group">
+                                    <div class="admin-group-title">Miniatura</div>
+                                    <div class="admin-row">
+                                        <input type="hidden" name="action" value="thumb">
+                                        <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
+                                        <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
+                                        <label class="file-btn">
+                                            <input type="file" name="thumb" class="file-input" accept="image/*" required>
+                                            Wybierz plik
+                                        </label>
+                                        <button type="submit" class="btn btn-secondary">Dodaj miniature</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <form method="post" action="/index.php" class="video-form">
+                                <div class="admin-group">
+                                    <div class="admin-group-title">Usun</div>
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Usunąć plik?')">Usuń</button>
-                                </form>
-
-                                <form method="post" action="/index.php" enctype="multipart/form-data" class="video-form">
-                                    <input type="hidden" name="action" value="thumb">
-                                    <input type="hidden" name="file" value="<?= htmlspecialchars($file) ?>">
-                                    <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
-                                    <input type="file" name="thumb" class="file-input" accept="image/*" required>
-                                    <button type="submit" class="btn btn-secondary">Dodaj miniaturę</button>
-                                </form>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                                    <button type="submit" class="btn btn-danger btn-full" onclick="return confirm('Usunac plik?')">Usun</button>
+                                </div>
+                            </form>
+                        </div>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>
@@ -140,35 +185,45 @@ function nice_title_from_filename(string $fileName): string
                 const input = document.getElementById('videoSearch');
                 const grid = document.getElementById('videosGrid');
                 const noResults = document.getElementById('noResults');
-                if (!input || !grid) return;
+                if (!grid) return;
 
                 const cards = Array.from(grid.querySelectorAll('.video-card'));
 
-                function applyFilter() {
-                    const q = input.value.trim().toLowerCase();
-                    let visible = 0;
+                if (input) {
+                    input.addEventListener('input', function() {
+                        const q = input.value.trim().toLowerCase();
+                        let visible = 0;
 
-                    cards.forEach(card => {
-                        const t = (card.dataset.title || '');
-                        const ok = t.includes(q);
-                        card.style.display = ok ? '' : 'none';
-                        if (ok) visible++;
+                        cards.forEach(card => {
+                            const t = (card.dataset.title || '');
+                            const ok = t.includes(q);
+                            card.style.display = ok ? '' : 'none';
+                            if (ok) visible++;
+                        });
+
+                        if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
                     });
-
-                    if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
                 }
 
-                input.addEventListener('input', applyFilter);
+                cards.forEach(card => {
+                    const playBtn = card.querySelector('.video-play');
+                    const player = card.querySelector('video');
+                    if (!playBtn || !player) return;
 
-                const medias = document.querySelectorAll('.video-media');
-                medias.forEach(media => {
-                    const video = media.querySelector('video');
-                    const poster = media.querySelector('.video-poster');
-                    if (!video || !poster) return;
+                    playBtn.addEventListener('click', () => {
+                        card.classList.add('is-open');
+                        player.play();
+                    });
+                });
 
-                    video.addEventListener('play', () => media.classList.add('playing'));
-                    video.addEventListener('pause', () => media.classList.remove('playing'));
-                    video.addEventListener('ended', () => media.classList.remove('playing'));
+                const forms = document.querySelectorAll('.video-form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', () => {
+                        const btn = form.querySelector('button[type="submit"]');
+                        if (!btn) return;
+                        btn.classList.add('is-loading');
+                        btn.setAttribute('disabled', 'disabled');
+                    });
                 });
             })();
         </script>

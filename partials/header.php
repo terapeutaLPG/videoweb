@@ -1,11 +1,13 @@
 <?php $isAdmin = !empty($isAdmin); ?>
 <header class="topbar">
-  <div class="topbar-title">
-    Filmy PL
-    <span class="topbar-sub">biblioteka wideo</span>
-    <?php if ($isAdmin): ?>
-      <span class="admin-badge">ADMIN</span>
-    <?php endif; ?>
+  <div class="topbar-left">
+    <div class="topbar-title">
+      Filmy PL
+      <?php if ($isAdmin): ?>
+        <span class="admin-badge">Admin</span>
+      <?php endif; ?>
+    </div>
+    <div class="topbar-sub">Biblioteka wideo</div>
   </div>
 
   <div class="topbar-actions">
