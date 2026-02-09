@@ -1,6 +1,6 @@
 <header class="topbar">
     <div class="topbar-title">
-        Moja Walentynka
+        Filmy PL
         <?php if (!empty($isAdmin)): ?>
             <span class="admin-badge">ADMIN</span>
         <?php endif; ?>

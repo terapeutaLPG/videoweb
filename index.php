@@ -169,7 +169,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? ''
     }
 }
 
-$showLogin = (!$isAdmin && (isset($_GET['admin']) || $loginError));
+$showLogin = !$isAdmin;
 ?>
 <!DOCTYPE html>
 <html lang="pl">
