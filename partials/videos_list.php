@@ -130,6 +130,20 @@ function nice_title_from_filename(string $fileName): string
                         </div>
                     </div>
 
+                    <div class="video-preview" aria-hidden="true">
+                        <div class="video-preview-thumb">
+                            <?php if ($poster): ?>
+                                <img src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>">
+                            <?php else: ?>
+                                Brak miniatury
+                            <?php endif; ?>
+                        </div>
+                        <div>
+                            <div class="video-preview-title"><?= htmlspecialchars($title) ?></div>
+                            <div class="video-preview-desc"><?= htmlspecialchars($desc ?: 'Brak opisu.') ?></div>
+                        </div>
+                    </div>
+
                     <div class="video-player">
                         <video
                             src="<?= htmlspecialchars($url) ?>"
@@ -384,6 +398,7 @@ function nice_title_from_filename(string $fileName): string
                     const playBtn = card.querySelector('.video-play');
                     const titleBtn = card.querySelector('.video-name-btn');
                     const media = card.querySelector('.video-media');
+                    let previewTimer = null;
 
                     if (!card.hasAttribute('tabindex')) {
                         card.setAttribute('tabindex', '0');
@@ -398,6 +413,26 @@ function nice_title_from_filename(string $fileName): string
                             handleOpen();
                         });
                     }
+
+                    const clearPreview = () => {
+                        if (previewTimer) {
+                            clearTimeout(previewTimer);
+                            previewTimer = null;
+                        }
+                        card.classList.remove('is-preview');
+                    };
+
+                    const schedulePreview = () => {
+                        if (previewTimer) return;
+                        previewTimer = setTimeout(() => {
+                            card.classList.add('is-preview');
+                            previewTimer = null;
+                        }, 4000);
+                    };
+
+                    card.addEventListener('pointerenter', schedulePreview);
+                    card.addEventListener('pointerleave', clearPreview);
+                    card.addEventListener('pointerdown', clearPreview);
 
                     card.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
