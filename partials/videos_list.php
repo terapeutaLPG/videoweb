@@ -473,6 +473,11 @@ function nice_title_from_filename(string $fileName): string
                         media.addEventListener('pointerdown', clearPreview);
                     }
                     card.addEventListener('pointerdown', clearPreview);
+                    card.addEventListener('focusin', () => {
+                        if (overlayOpen) return;
+                        showHoverPreview(card);
+                    });
+                    card.addEventListener('focusout', clearPreview);
 
                     card.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
