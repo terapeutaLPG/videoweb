@@ -164,7 +164,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       z-index: 0;
     }
 
-    body > * {
+    body>* {
       position: relative;
       z-index: 1;
     }
@@ -478,6 +478,22 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+
+    .video-name-btn {
+      background: none;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .video-name-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+      border-radius: 6px;
     }
 
     .video-info {
@@ -818,6 +834,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
         opacity: 0;
         transform: translateY(4px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);

@@ -107,9 +107,9 @@ function nice_title_from_filename(string $fileName): string
                     </div>
 
                     <div class="video-meta">
-                        <div class="video-name" title="<?= htmlspecialchars($title) ?>">
+                        <button type="button" class="video-name video-name-btn" title="<?= htmlspecialchars($title) ?>" aria-label="Odtworz: <?= htmlspecialchars($title) ?>">
                             <?= htmlspecialchars($title) ?>
-                        </div>
+                        </button>
 
                         <div class="video-info">
                             <span class="muted"><?= htmlspecialchars($date) ?></span>
@@ -126,7 +126,7 @@ function nice_title_from_filename(string $fileName): string
                     <div class="video-player">
                         <video
                             src="<?= htmlspecialchars($url) ?>"
-                            <?php if ($poster): ?>poster="<?= htmlspecialchars($poster) ?>"<?php endif; ?>
+                            <?php if ($poster): ?>poster="<?= htmlspecialchars($poster) ?>" <?php endif; ?>
                             controls
                             preload="metadata"></video>
                     </div>
@@ -207,13 +207,17 @@ function nice_title_from_filename(string $fileName): string
 
                 cards.forEach(card => {
                     const playBtn = card.querySelector('.video-play');
+                    const titleBtn = card.querySelector('.video-name-btn');
                     const player = card.querySelector('video');
-                    if (!playBtn || !player) return;
+                    if (!player) return;
 
-                    playBtn.addEventListener('click', () => {
+                    const openAndPlay = () => {
                         card.classList.add('is-open');
                         player.play();
-                    });
+                    };
+
+                    if (playBtn) playBtn.addEventListener('click', openAndPlay);
+                    if (titleBtn) titleBtn.addEventListener('click', openAndPlay);
                 });
 
                 const forms = document.querySelectorAll('.video-form');
