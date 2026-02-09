@@ -622,6 +622,8 @@ $iconUrl = $siteUrl . 'favicon.svg';
       overflow: hidden;
       box-shadow: 0 16px 30px rgba(0, 0, 0, 0.28);
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      content-visibility: auto;
+      contain-intrinsic-size: 340px 260px;
     }
 
     .hover-preview {
@@ -980,6 +982,80 @@ $iconUrl = $siteUrl . 'favicon.svg';
       border-radius: 0;
       border: 0;
       object-fit: cover;
+    }
+
+    .tv-mode {
+      background: #0a0c12;
+    }
+
+    .light-mode {
+      background: #0b0e14;
+    }
+
+    .light-mode::before {
+      display: none;
+    }
+
+    .light-mode .topbar,
+    .light-mode .recent-card,
+    .light-mode .video-card,
+    .light-mode .card,
+    .light-mode .modal {
+      backdrop-filter: none;
+      box-shadow: none;
+      transition: none;
+      background: rgba(12, 16, 26, 0.92);
+    }
+
+    .light-mode .video-card:hover,
+    .light-mode .recent-card:hover,
+    .light-mode .topbar-link:hover,
+    .light-mode .btn:hover {
+      transform: none;
+    }
+
+    .light-mode .video-poster,
+    .light-mode .video-play {
+      transition: none;
+    }
+
+    .light-mode .hover-preview {
+      display: none;
+    }
+
+    .tv-mode .topbar,
+    .tv-mode .recent-card,
+    .tv-mode .video-card,
+    .tv-mode .card {
+      backdrop-filter: none;
+      box-shadow: none;
+      transition: none;
+    }
+
+    .tv-mode .video-card:hover,
+    .tv-mode .recent-card:hover {
+      transform: none;
+    }
+
+    .tv-mode .video-poster,
+    .tv-mode .video-play {
+      transition: none;
+    }
+
+    .tv-mode .hover-preview {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+
+      .hover-preview {
+        display: none;
+      }
     }
 
     .overlay-close {

@@ -120,7 +120,7 @@ function nice_title_from_filename(string $fileName): string
                     <div class="video-media">
                         <div class="video-badge">HD</div>
                         <?php if ($poster): ?>
-                            <img class="video-poster" src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>">
+                            <img class="video-poster" src="<?= htmlspecialchars($poster) ?>" alt="<?= htmlspecialchars($title) ?>" loading="lazy" decoding="async" fetchpriority="low">
                         <?php else: ?>
                             <div class="video-placeholder" aria-hidden="true">
                                 <div>
@@ -288,8 +288,12 @@ function nice_title_from_filename(string $fileName): string
                 let recentData = null;
                 let lastSave = 0;
 
+                const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+                let allowHoverPreview = !prefersReducedMotion;
+
                 if (input) {
-                    input.addEventListener('input', function() {
+                    let searchRaf = 0;
+                    const runSearch = () => {
                         const q = input.value.trim().toLowerCase();
                         let visible = 0;
 
@@ -301,6 +305,11 @@ function nice_title_from_filename(string $fileName): string
                         });
 
                         if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+                    };
+
+                    input.addEventListener('input', function() {
+                        if (searchRaf) cancelAnimationFrame(searchRaf);
+                        searchRaf = requestAnimationFrame(runSearch);
                     });
                 }
 
@@ -311,6 +320,7 @@ function nice_title_from_filename(string $fileName): string
                 const overlayVideo = document.getElementById('overlayVideo');
                 const overlayFullscreen = document.getElementById('overlayFullscreen');
                 const tvToggle = document.getElementById('tvToggle');
+                const lightToggle = document.getElementById('lightToggle');
                 const tvToast = document.getElementById('tvToast');
                 const hoverPreview = document.getElementById('hoverPreview');
                 const hoverPreviewThumb = document.getElementById('hoverPreviewThumb');
@@ -318,21 +328,36 @@ function nice_title_from_filename(string $fileName): string
                 const hoverPreviewDesc = document.getElementById('hoverPreviewDesc');
 
                 const TV_STORAGE_KEY = 'video_tv_mode';
+                const LIGHT_STORAGE_KEY = 'ui_light_mode';
                 const baseUrl = window.location.pathname + window.location.search;
                 let tvMode = false;
+                let lightMode = false;
                 let overlayOpen = false;
                 let tvToastTimer = null;
 
                 const applyTvMode = (enabled) => {
                     tvMode = enabled;
+                    allowHoverPreview = !enabled && !prefersReducedMotion && !lightMode;
                     document.body.classList.toggle('tv-mode', enabled);
                     if (tvToggle) {
                         tvToggle.classList.toggle('is-on', enabled);
                         tvToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
                     }
+                    if (enabled) hideHoverPreview();
                     if (enabled && overlayOpen && overlayVideo) {
                         requestVideoFullscreen(overlayVideo);
                     }
+                };
+
+                const applyLightMode = (enabled) => {
+                    lightMode = enabled;
+                    allowHoverPreview = !enabled && !prefersReducedMotion && !tvMode;
+                    document.body.classList.toggle('light-mode', enabled);
+                    if (lightToggle) {
+                        lightToggle.classList.toggle('is-on', enabled);
+                        lightToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+                    }
+                    if (enabled) hideHoverPreview();
                 };
 
                 const showTvToast = () => {
@@ -363,6 +388,16 @@ function nice_title_from_filename(string $fileName): string
                     applyTvMode(saved);
                 };
 
+                const loadLightMode = () => {
+                    let saved = false;
+                    try {
+                        saved = localStorage.getItem(LIGHT_STORAGE_KEY) === '1';
+                    } catch (err) {
+                        saved = false;
+                    }
+                    applyLightMode(saved);
+                };
+
                 if (tvToggle) {
                     loadTvMode();
                     tvToggle.addEventListener('click', () => {
@@ -378,6 +413,21 @@ function nice_title_from_filename(string $fileName): string
                     });
                 } else {
                     loadTvMode();
+                }
+
+                if (lightToggle) {
+                    loadLightMode();
+                    lightToggle.addEventListener('click', () => {
+                        const next = !lightMode;
+                        applyLightMode(next);
+                        try {
+                            localStorage.setItem(LIGHT_STORAGE_KEY, next ? '1' : '0');
+                        } catch (err) {
+                            // ignore storage errors
+                        }
+                    });
+                } else {
+                    loadLightMode();
                 }
 
                 const requestVideoFullscreen = (video) => {
@@ -411,6 +461,7 @@ function nice_title_from_filename(string $fileName): string
                 };
 
                 const showHoverPreview = (card) => {
+                    if (!allowHoverPreview) return;
                     if (!hoverPreview || !hoverPreviewThumb || !hoverPreviewTitle || !hoverPreviewDesc) return;
                     const title = card.dataset.title || '';
                     const desc = card.dataset.desc || '';
@@ -424,6 +475,8 @@ function nice_title_from_filename(string $fileName): string
                         const img = document.createElement('img');
                         img.src = poster;
                         img.alt = title;
+                        img.loading = 'lazy';
+                        img.decoding = 'async';
                         hoverPreviewThumb.appendChild(img);
                     } else {
                         const span = document.createElement('span');
@@ -504,6 +557,8 @@ function nice_title_from_filename(string $fileName): string
                         const img = document.createElement('img');
                         img.src = data.poster;
                         img.alt = data.title || 'Miniatura';
+                        img.loading = 'lazy';
+                        img.decoding = 'async';
                         recentThumb.appendChild(img);
                     } else {
                         const span = document.createElement('span');
@@ -646,6 +701,7 @@ function nice_title_from_filename(string $fileName): string
                     };
 
                     const schedulePreview = () => {
+                        if (!allowHoverPreview) return;
                         if (previewTimer) return;
                         previewTimer = setTimeout(() => {
                             card.classList.add('is-preview');
