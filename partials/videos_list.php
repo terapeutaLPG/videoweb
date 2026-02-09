@@ -15,6 +15,14 @@ $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 if ($basePath === '/') {
     $basePath = '';
 }
+$thumbMap = is_array($thumbMap ?? null) ? $thumbMap : [];
+
+function buildPublicPath(string $basePath, string $relativePath): string
+{
+    $relativePath = trim($relativePath, '/');
+    $parts = array_map('rawurlencode', explode('/', $relativePath));
+    return $basePath . '/' . implode('/', $parts);
+}
 ?>
 
 <section class="card">
@@ -34,11 +42,15 @@ if ($basePath === '/') {
                 <?php
                 $fileName = basename($video);
                 $title = pathinfo($fileName, PATHINFO_FILENAME);
-                $publicPath = $basePath . '/videos/' . rawurlencode($fileName);
+                $publicPath = buildPublicPath($basePath, 'videos/' . $fileName);
                 $displayTitle = str_replace(['_', '-'], ' ', $title);
+                $poster = '';
+                if (!empty($thumbMap[$fileName])) {
+                    $poster = buildPublicPath($basePath, $thumbMap[$fileName]);
+                }
                 ?>
                 <div class="video-card" data-title="<?= htmlspecialchars(strtolower($displayTitle)) ?>">
-                    <video src="<?= htmlspecialchars($publicPath) ?>" controls preload="metadata"></video>
+                    <video src="<?= htmlspecialchars($publicPath) ?>" controls preload="metadata" <?= $poster ? 'poster="' . htmlspecialchars($poster) . '"' : '' ?>></video>
                     <div class="video-card-body">
                         <div class="video-title"><?= htmlspecialchars($displayTitle) ?></div>
                         <div class="video-date"><?= htmlspecialchars(date('Y-m-d H:i', filemtime($video))) ?></div>
@@ -49,6 +61,12 @@ if ($basePath === '/') {
                                     <input type="hidden" name="file" value="<?= htmlspecialchars($fileName) ?>">
                                     <input type="text" name="new_name" placeholder="Nowa nazwa" class="search-input" style="margin-top:8px;" required>
                                     <button type="submit" class="action-link">Zmien nazwe</button>
+                                </form>
+                                <form method="post" class="inline-form">
+                                    <input type="hidden" name="action" value="set_thumb">
+                                    <input type="hidden" name="file" value="<?= htmlspecialchars($fileName) ?>">
+                                    <input type="text" name="thumb_path" placeholder="Miniaturka (np. thumbs/mini.jpg)" class="search-input" style="margin-top:8px;" required>
+                                    <button type="submit" class="action-link">Ustaw miniaturke</button>
                                 </form>
                                 <form method="post" class="inline-form" onsubmit="return confirm('Usunac ten film?');">
                                     <input type="hidden" name="action" value="delete_video">

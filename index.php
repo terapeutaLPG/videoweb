@@ -2,14 +2,34 @@
 session_start();
 
 $adminUser = 'admin';
-$adminPass = 'password123';
+$adminPass = 'CtwyMobM@1T5aJ@dPxy$2';
 
 $isAdmin = !empty($_SESSION['is_admin']);
 $loginError = null;
 $actionMsg = null;
 $actionErr = null;
 
-$videoDir = __DIR__ . '/videos';
+$rootDir = __DIR__;
+$videoDir = $rootDir . '/videos';
+$thumbMapFile = $videoDir . '/.thumbs.json';
+
+function loadThumbMap(string $file): array
+{
+    if (!is_file($file)) {
+        return [];
+    }
+    $data = json_decode((string)file_get_contents($file), true);
+    return is_array($data) ? $data : [];
+}
+
+function saveThumbMap(string $file, array $map): bool
+{
+    $payload = json_encode($map, JSON_UNESCAPED_SLASHES);
+    if ($payload === false) {
+        return false;
+    }
+    return file_put_contents($file, $payload, LOCK_EX) !== false;
+}
 
 function sanitizeVideoName(string $name): string
 {
@@ -32,6 +52,47 @@ function resolveVideoPath(string $videoDir, string $file): ?string
     return $path;
 }
 
+function sanitizeThumbPath(string $path): ?string
+{
+    $path = trim(str_replace('\\', '/', $path));
+    if ($path === '') {
+        return null;
+    }
+    if (str_starts_with($path, '/')) {
+        return null;
+    }
+    if (preg_match('~^[a-z]+:~i', $path)) {
+        return null;
+    }
+    if (strpos($path, '..') !== false) {
+        return null;
+    }
+    return $path;
+}
+
+function resolveThumbPath(string $rootDir, string $relative): ?string
+{
+    $relative = sanitizeThumbPath($relative);
+    if ($relative === null) {
+        return null;
+    }
+    $fullPath = $rootDir . '/' . $relative;
+    $realRoot = realpath($rootDir);
+    $realPath = realpath($fullPath);
+    if ($realRoot === false || $realPath === false) {
+        return null;
+    }
+    if (strpos($realPath, $realRoot) !== 0) {
+        return null;
+    }
+    if (!is_file($realPath)) {
+        return null;
+    }
+    return $relative;
+}
+
+$thumbMap = loadThumbMap($thumbMapFile);
+
 if (isset($_GET['logout'])) {
     session_destroy();
     header('Location: /index.php');
@@ -53,6 +114,10 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? ''
     $file = $_POST['file'] ?? '';
     $path = resolveVideoPath($videoDir, $file);
     if ($path && unlink($path)) {
+        if (isset($thumbMap[$file])) {
+            unset($thumbMap[$file]);
+            saveThumbMap($thumbMapFile, $thumbMap);
+        }
         $actionMsg = 'Film zostal usuniety.';
     } else {
         $actionErr = 'Nie udalo sie usunac pliku.';
@@ -68,13 +133,38 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? ''
     } elseif ($newName === '') {
         $actionErr = 'Podaj nowa nazwe.';
     } else {
-        $target = $videoDir . '/' . $newName . '.mp4';
+        $newFile = $newName . '.mp4';
+        $target = $videoDir . '/' . $newFile;
         if (is_file($target)) {
             $actionErr = 'Plik o tej nazwie juz istnieje.';
         } elseif (rename($path, $target)) {
+            if (isset($thumbMap[$file])) {
+                $thumbMap[$newFile] = $thumbMap[$file];
+                unset($thumbMap[$file]);
+                saveThumbMap($thumbMapFile, $thumbMap);
+            }
             $actionMsg = 'Nazwa filmu zostala zmieniona.';
         } else {
             $actionErr = 'Nie udalo sie zmienic nazwy pliku.';
+        }
+    }
+}
+
+if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_thumb') {
+    $file = $_POST['file'] ?? '';
+    $thumbPath = $_POST['thumb_path'] ?? '';
+    $videoPath = resolveVideoPath($videoDir, $file);
+    $thumbRel = resolveThumbPath($rootDir, $thumbPath);
+    if (!$videoPath) {
+        $actionErr = 'Nie znaleziono filmu do ustawienia miniaturki.';
+    } elseif ($thumbRel === null) {
+        $actionErr = 'Podaj poprawna sciezke do miniaturki.';
+    } else {
+        $thumbMap[$file] = $thumbRel;
+        if (saveThumbMap($thumbMapFile, $thumbMap)) {
+            $actionMsg = 'Miniaturka zostala ustawiona.';
+        } else {
+            $actionErr = 'Nie udalo sie zapisac miniaturki.';
         }
     }
 }
@@ -104,6 +194,15 @@ $showLogin = (!$isAdmin && (isset($_GET['admin']) || $loginError));
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .topbar-title { font-weight: 600; font-size: 18px; }
+        .admin-badge {
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 11px;
+            background: rgba(248, 113, 113, 0.2);
+            color: #fda4af;
+            border: 1px solid rgba(248, 113, 113, 0.4);
+        }
         .topbar-link { color: #fb7185; text-decoration: none; font-weight: 600; }
         .topbar-link:hover { text-decoration: underline; }
         .container { max-width: 1200px; margin: 24px auto; padding: 0 16px 40px; }
