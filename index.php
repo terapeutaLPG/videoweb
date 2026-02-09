@@ -1,5 +1,8 @@
 <?php
 session_start();
+$isAdmin = !empty($_SESSION['is_admin']); // albo logged_in — ważne, żeby wszędzie było to samo
+
+session_start();
 require __DIR__ . '/db.php';
 
 $isAdmin = !empty($_SESSION['is_admin']);

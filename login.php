@@ -7,7 +7,7 @@ $password = $_POST['password'] ?? '';
 
 if ($login === $adminUser && $password === $adminPass) {
     session_regenerate_id(true);
-    $_SESSION['is_admin'] = true;
+    $_SESSION['logged_in'] = true;
     header('Location: /index.php');
     exit;
 }
