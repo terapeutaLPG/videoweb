@@ -213,6 +213,19 @@ function nice_title_from_filename(string $fileName): string
             </div>
         </div>
 
+        <div class="tv-toast" id="tvToast" role="status" aria-live="polite">
+            <div class="tv-toast-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <rect x="3" y="6" width="18" height="12" rx="2" />
+                    <path d="M8 3l4 3 4-3" />
+                </svg>
+            </div>
+            <div>
+                <div class="tv-toast-title">Tryb TV uruchomiony</div>
+                <div class="tv-toast-sub">Filmy startuja w pelnym ekranie</div>
+            </div>
+        </div>
+
         <script>
             (function() {
                 const input = document.getElementById('videoSearch');
@@ -245,17 +258,37 @@ function nice_title_from_filename(string $fileName): string
                 const overlayVideo = document.getElementById('overlayVideo');
                 const overlayFullscreen = document.getElementById('overlayFullscreen');
                 const tvToggle = document.getElementById('tvToggle');
+                const tvToast = document.getElementById('tvToast');
 
                 const TV_STORAGE_KEY = 'video_tv_mode';
                 const baseUrl = window.location.pathname + window.location.search;
                 let tvMode = false;
                 let overlayOpen = false;
+                let tvToastTimer = null;
 
                 const applyTvMode = (enabled) => {
                     tvMode = enabled;
                     if (!tvToggle) return;
                     tvToggle.classList.toggle('is-on', enabled);
                     tvToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+                };
+
+                const showTvToast = () => {
+                    if (!tvToast) return;
+                    tvToast.classList.remove('show');
+                    void tvToast.offsetWidth;
+                    tvToast.classList.add('show');
+                    if (tvToastTimer) clearTimeout(tvToastTimer);
+                    tvToastTimer = setTimeout(() => {
+                        tvToast.classList.remove('show');
+                    }, 2200);
+                };
+
+                const animateTvToggle = () => {
+                    if (!tvToggle) return;
+                    tvToggle.classList.remove('is-pressed');
+                    void tvToggle.offsetWidth;
+                    tvToggle.classList.add('is-pressed');
                 };
 
                 const loadTvMode = () => {
@@ -273,6 +306,8 @@ function nice_title_from_filename(string $fileName): string
                     tvToggle.addEventListener('click', () => {
                         const next = !tvMode;
                         applyTvMode(next);
+                        animateTvToggle();
+                        if (next) showTvToast();
                         try {
                             localStorage.setItem(TV_STORAGE_KEY, next ? '1' : '0');
                         } catch (err) {

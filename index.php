@@ -324,6 +324,60 @@ if ($metaTableReady) {
       box-shadow: 0 0 0 2px rgba(57, 211, 255, 0.12) inset;
     }
 
+    .tv-toggle.is-pressed {
+      animation: tv-press 0.35s ease;
+    }
+
+    .tv-toast {
+      position: fixed;
+      top: 86px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 211, 255, 0.35);
+      background: rgba(12, 18, 30, 0.92);
+      color: var(--text);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      transform: translateY(-8px) scale(0.98);
+      pointer-events: none;
+      z-index: 130;
+    }
+
+    .tv-toast.show {
+      animation: tv-toast 2.2s ease forwards;
+    }
+
+    .tv-toast-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      background: rgba(57, 211, 255, 0.18);
+      color: var(--accent);
+      border: 1px solid rgba(57, 211, 255, 0.35);
+    }
+
+    .tv-toast-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .tv-toast-title {
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+
+    .tv-toast-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
     .topbar-link:hover {
       transform: translateY(-1px);
       border-color: rgba(57, 211, 255, 0.35);
@@ -1012,6 +1066,45 @@ if ($metaTableReady) {
       to {
         opacity: 1;
         transform: translateY(0);
+      }
+    }
+
+    @keyframes tv-press {
+      0% {
+        transform: translateY(0) scale(1);
+      }
+
+      35% {
+        transform: translateY(1px) scale(0.96);
+      }
+
+      70% {
+        transform: translateY(-1px) scale(1.03);
+      }
+
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes tv-toast {
+      0% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+      }
+
+      15% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      70% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
       }
     }
 
