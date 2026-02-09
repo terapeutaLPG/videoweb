@@ -1,65 +1,76 @@
 <?php
-$loginError = $_SESSION['login_error'] ?? null;
-unset($_SESSION['login_error']);
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 ?>
 
-<div class="modal-backdrop" id="loginModal" aria-hidden="true">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title">Logowanie</div>
-      <button type="button" class="modal-close" id="closeLogin">✕</button>
-    </div>
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeLoginModal()">&times;</span>
 
-    <form method="post" action="/login.php">
-      <div class="field">
-        <label>Login</label>
-        <input type="text" name="login" required>
+    <h2>Logowanie</h2>
+
+    <?php if (!empty($_SESSION['login_error'])): ?>
+      <div class="login-error">
+        <?php
+        echo $_SESSION['login_error'];
+        unset($_SESSION['login_error']);
+        ?>
+      </div>
+    <?php endif; ?>
+
+    <form action="login.php" method="post">
+      <div class="form-group">
+        <label for="username">Login</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          required>
       </div>
 
-      <div class="field">
-        <label>Hasło</label>
-        <input type="password" name="password" required>
+      <div class="form-group">
+        <label for="password">Hasło</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required>
       </div>
 
-      <button class="btn" type="submit">Zaloguj</button>
-
-      <?php if (!empty($loginError)): ?>
-        <div class="error"><?= htmlspecialchars($loginError) ?></div>
-      <?php endif; ?>
+      <button type="submit" class="login-btn">
+        Zaloguj
+      </button>
     </form>
   </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('loginModal');
-  const openBtn = document.getElementById('openLogin');
-  const closeBtn = document.getElementById('closeLogin');
-
-  if (!modal) return;
-
-  function openModal() {
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
-  }
-  function closeModal() {
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden', 'true');
+  function openLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
   }
 
-  if (openBtn) openBtn.addEventListener('click', openModal);
-  if (closeBtn) closeBtn.addEventListener('click', closeModal);
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-  });
-
-  // jeśli był błąd logowania, pokaż modal automatycznie
-  const hasError = <?= $loginError ? 'true' : 'false' ?>;
-  if (hasError) openModal();
-});
+  function closeLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
 </script>
+
+<?php if (!empty($_SESSION['is_admin'])): ?>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    });
+  </script>
+<?php endif; ?>
