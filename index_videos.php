@@ -1,4 +1,7 @@
 <?php
+require __DIR__ . '/db.php';
+$isAdmin = !empty($_SESSION['is_admin']);
+
 // katalog z filmami
 $videoDir = 'videos';
 
@@ -26,7 +29,7 @@ foreach ($videos as $video) {
     echo '<video src="' . htmlspecialchars($video) . '" controls width="600"></video>';
 
     // opcje admina
-    if (isset($_SESSION['user_id'])) {
+    if ($isAdmin) {
         echo '<div style="margin-top:10px; opacity:0.7;">';
         echo 'Plik: ' . htmlspecialchars($fileName);
         echo '</div>';

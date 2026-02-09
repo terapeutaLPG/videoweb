@@ -1,10 +1,9 @@
 <?php
-session_start();
-
 require __DIR__ . '/db.php';
+$isAdmin = !empty($_SESSION['is_admin']);
 
 // jedna nazwa sesji wszędzie
-$isAdmin = !empty($_SESSION['is_admin']);
+#$isAdmin = !empty($_SESSION['is_admin']);
 ?>
 <!DOCTYPE html>
 <html lang="pl">

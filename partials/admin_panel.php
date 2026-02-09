@@ -1,3 +1,8 @@
+<?php
+$actionMsg = $actionMsg ?? '';
+$actionErr = $actionErr ?? '';
+?>
+
 <section class="card">
     <h2>Panel admina</h2>
     <p class="muted">Aby dodac film, wrzuc plik MP4 do katalogu <b>/videos</b> przez FTP.</p>

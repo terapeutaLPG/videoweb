@@ -8,13 +8,26 @@ if (is_dir($sessionPath) && is_writable($sessionPath)) {
     session_save_path($sessionPath);
 }
 
+// Ustawienia sesji i start (jeśli jeszcze nie uruchomiona)
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_name('VIDEOWEBSESSID');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
+
 $dbHost = 'mysql8';
 $dbName = '40618186_filmy';
 $dbUser = '40618186_filmy';
 $dbPass = 'hggCcFbjf1';
 
 $adminUser = 'admin';
-$adminPass = 'CtwyMobM@1T5aJ@dPxy$2';
+$adminPass = 'CtwyMobM1T5aJdPxy2';
 
 try {
     $pdo = new PDO(

@@ -10,12 +10,14 @@ usort($videos, function ($a, $b) {
     return filemtime($b) <=> filemtime($a);
 });
 
-function video_public_url(string $fileName): string {
+function video_public_url(string $fileName): string
+{
     // spacje i znaki w nazwie pliku
     return '/videos/' . rawurlencode($fileName);
 }
 
-function nice_title_from_filename(string $fileName): string {
+function nice_title_from_filename(string $fileName): string
+{
     $title = pathinfo($fileName, PATHINFO_FILENAME);
     $title = str_replace(['_', '-'], ' ', $title);
     $title = preg_replace('/\s+/', ' ', $title);
@@ -40,8 +42,7 @@ function nice_title_from_filename(string $fileName): string {
                 class="search-input"
                 type="text"
                 placeholder="Szukaj po nazwie filmu..."
-                autocomplete="off"
-            >
+                autocomplete="off">
         </div>
     </div>
 
@@ -91,30 +92,30 @@ function nice_title_from_filename(string $fileName): string {
         </div>
 
         <script>
-        (function () {
-          const input = document.getElementById('videoSearch');
-          const grid = document.getElementById('videosGrid');
-          const noResults = document.getElementById('noResults');
-          if (!input || !grid) return;
+            (function() {
+                const input = document.getElementById('videoSearch');
+                const grid = document.getElementById('videosGrid');
+                const noResults = document.getElementById('noResults');
+                if (!input || !grid) return;
 
-          const cards = Array.from(grid.querySelectorAll('.video-card'));
+                const cards = Array.from(grid.querySelectorAll('.video-card'));
 
-          function applyFilter() {
-            const q = input.value.trim().toLowerCase();
-            let visible = 0;
+                function applyFilter() {
+                    const q = input.value.trim().toLowerCase();
+                    let visible = 0;
 
-            cards.forEach(card => {
-              const t = (card.dataset.title || '');
-              const ok = t.includes(q);
-              card.style.display = ok ? '' : 'none';
-              if (ok) visible++;
-            });
+                    cards.forEach(card => {
+                        const t = (card.dataset.title || '');
+                        const ok = t.includes(q);
+                        card.style.display = ok ? '' : 'none';
+                        if (ok) visible++;
+                    });
 
-            if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
-          }
+                    if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+                }
 
-          input.addEventListener('input', applyFilter);
-        })();
+                input.addEventListener('input', applyFilter);
+            })();
         </script>
     <?php endif; ?>
 </section>
