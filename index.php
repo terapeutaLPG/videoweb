@@ -499,43 +499,44 @@ if ($metaTableReady) {
     }
 
     .video-preview {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(980px, 92vw);
+      height: min(62vh, 520px);
       display: grid;
-      grid-template-columns: 160px 1fr;
-      gap: 16px;
-      padding: 16px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(6, 10, 20, 0.94);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      grid-template-columns: minmax(240px, 42%) 1fr;
+      gap: 22px;
+      padding: 22px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(6, 10, 20, 0.96);
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.55);
       opacity: 0;
-      transform: translateY(12px) scale(0.98);
+      transform: translate(-50%, -48%) scale(0.98);
       pointer-events: none;
       transition: opacity 0.25s ease, transform 0.25s ease;
-      z-index: 4;
+      z-index: 30;
     }
 
     .video-card.is-preview .video-preview {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
 
     .video-preview-thumb {
-      width: 160px;
-      height: 100px;
-      border-radius: 12px;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
       overflow: hidden;
       background: rgba(57, 211, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.12);
       display: grid;
       place-items: center;
       color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
+      font-size: 13px;
       text-align: center;
-      padding: 8px;
+      padding: 10px;
     }
 
     .video-preview-thumb img {
@@ -546,17 +547,17 @@ if ($metaTableReady) {
     }
 
     .video-preview-title {
-      font-size: 14px;
+      font-size: 18px;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
     }
 
     .video-preview-desc {
-      font-size: 12px;
+      font-size: 14px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.6;
       display: -webkit-box;
-      -webkit-line-clamp: 4;
+      -webkit-line-clamp: 10;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
