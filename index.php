@@ -4,58 +4,79 @@ $isAdmin = !empty($_SESSION['is_admin']);
 $actionMsg = '';
 $actionErr = '';
 
+$metaTableReady = false;
+try {
+  $pdo->exec(
+    'CREATE TABLE IF NOT EXISTS video_meta (
+      file_name VARCHAR(255) PRIMARY KEY,
+      description TEXT NOT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+  );
+  $metaTableReady = true;
+} catch (PDOException $e) {
+  $actionErr = 'Nie udalo sie przygotowac bazy opisow.';
+}
+
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
   $action = $_POST['action'] ?? '';
   $file = basename($_POST['file'] ?? '');
   $videoDirFs = __DIR__ . '/videos';
   $thumbDirFs = __DIR__ . '/thumbnails';
+  $videoPath = $videoDirFs . '/' . $file;
+  $baseName = pathinfo($file, PATHINFO_FILENAME);
 
-  if (!is_dir($thumbDirFs)) {
-    @mkdir($thumbDirFs, 0755, true);
-  }
-  if (!is_dir($thumbDirFs) || !is_writable($thumbDirFs)) {
-    $actionErr = 'Brak zapisu do katalogu /thumbnails.';
+  if (!is_file($videoPath)) {
+    $actionErr = 'Nie znaleziono pliku wideo.';
   } else {
-    $videoPath = $videoDirFs . '/' . $file;
-    $baseName = pathinfo($file, PATHINFO_FILENAME);
-
-    if (!is_file($videoPath)) {
-      $actionErr = 'Nie znaleziono pliku wideo.';
-    } else {
-      if ($action === 'rename') {
-        $new = trim($_POST['new_name'] ?? '');
-        $new = preg_replace('/[^A-Za-z0-9 _-]/', '', $new);
-        $new = trim(preg_replace('/\s+/', ' ', $new));
-        if ($new === '') {
-          $actionErr = 'Nowa nazwa jest pusta.';
-        } else {
-          $newFile = $new . '.mp4';
-          $newPath = $videoDirFs . '/' . $newFile;
-          if (is_file($newPath)) {
-            $actionErr = 'Plik o tej nazwie już istnieje.';
-          } elseif (@rename($videoPath, $newPath)) {
-            foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
-              $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
-              if (is_file($oldThumb)) {
-                @rename($oldThumb, $thumbDirFs . '/' . $new . '.' . $ext);
-              }
-            }
-            $actionMsg = 'Zmieniono nazwę pliku.';
-          } else {
-            $actionErr = 'Nie udało się zmienić nazwy.';
-          }
-        }
-      } elseif ($action === 'delete') {
-        if (@unlink($videoPath)) {
+    if ($action === 'rename') {
+      $new = trim($_POST['new_name'] ?? '');
+      $new = preg_replace('/[^A-Za-z0-9 _-]/', '', $new);
+      $new = trim(preg_replace('/\s+/', ' ', $new));
+      if ($new === '') {
+        $actionErr = 'Nowa nazwa jest pusta.';
+      } else {
+        $newFile = $new . '.mp4';
+        $newPath = $videoDirFs . '/' . $newFile;
+        if (is_file($newPath)) {
+          $actionErr = 'Plik o tej nazwie już istnieje.';
+        } elseif (@rename($videoPath, $newPath)) {
           foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
             $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
-            if (is_file($oldThumb)) @unlink($oldThumb);
+            if (is_file($oldThumb)) {
+              @rename($oldThumb, $thumbDirFs . '/' . $new . '.' . $ext);
+            }
           }
-          $actionMsg = 'Usunięto plik.';
+          if ($metaTableReady) {
+            $stmt = $pdo->prepare('UPDATE video_meta SET file_name = :new WHERE file_name = :old');
+            $stmt->execute([':new' => $newFile, ':old' => $file]);
+          }
+          $actionMsg = 'Zmieniono nazwę pliku.';
         } else {
-          $actionErr = 'Nie udało się usunąć pliku.';
+          $actionErr = 'Nie udało się zmienić nazwy.';
         }
-      } elseif ($action === 'thumb') {
+      }
+    } elseif ($action === 'delete') {
+      if (@unlink($videoPath)) {
+        foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+          $oldThumb = $thumbDirFs . '/' . $baseName . '.' . $ext;
+          if (is_file($oldThumb)) @unlink($oldThumb);
+        }
+        if ($metaTableReady) {
+          $stmt = $pdo->prepare('DELETE FROM video_meta WHERE file_name = :file');
+          $stmt->execute([':file' => $file]);
+        }
+        $actionMsg = 'Usunięto plik.';
+      } else {
+        $actionErr = 'Nie udało się usunąć pliku.';
+      }
+    } elseif ($action === 'thumb') {
+      if (!is_dir($thumbDirFs)) {
+        @mkdir($thumbDirFs, 0755, true);
+      }
+      if (!is_dir($thumbDirFs) || !is_writable($thumbDirFs)) {
+        $actionErr = 'Brak zapisu do katalogu /thumbnails.';
+      } else {
         $f = $_FILES['thumb'] ?? null;
         if (!$f || !isset($f['error'])) {
           $actionErr = 'Brak pliku miniaturki.';
@@ -98,7 +119,30 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
           }
         }
       }
+    } elseif ($action === 'desc') {
+      if (!$metaTableReady) {
+        $actionErr = 'Baza opisow jest niedostepna.';
+      } else {
+        $desc = trim($_POST['description'] ?? '');
+        if (mb_strlen($desc) > 1200) {
+          $desc = mb_substr($desc, 0, 1200);
+        }
+        $stmt = $pdo->prepare(
+          'INSERT INTO video_meta (file_name, description) VALUES (:file, :desc)
+           ON DUPLICATE KEY UPDATE description = VALUES(description)'
+        );
+        $stmt->execute([':file' => $file, ':desc' => $desc]);
+        $actionMsg = 'Zapisano opis.';
+      }
     }
+  }
+}
+
+$videoDescriptions = [];
+if ($metaTableReady) {
+  $rows = $pdo->query('SELECT file_name, description FROM video_meta')->fetchAll();
+  foreach ($rows as $row) {
+    $videoDescriptions[$row['file_name']] = $row['description'];
   }
 }
 ?>
@@ -151,6 +195,10 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
         linear-gradient(180deg, var(--bg-0), var(--bg-1));
       position: relative;
       overflow-x: hidden;
+    }
+
+    body.is-locked {
+      overflow: hidden;
     }
 
     body::before {
@@ -522,6 +570,71 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    .video-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(6, 8, 14, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 120;
+    }
+
+    .video-overlay.is-open {
+      display: flex;
+    }
+
+    .overlay-content {
+      width: min(980px, 100%);
+      background: rgba(12, 16, 26, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 14px;
+    }
+
+    .overlay-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .overlay-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .overlay-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .overlay-video {
+      width: 100%;
+      border-radius: var(--radius-md);
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .overlay-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .overlay-close {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
     .video-card.is-open .video-player {
       display: block;
       animation: fadeIn 0.2s ease;
@@ -599,6 +712,15 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
+    }
+
+    .admin-row.stack {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .admin-row.stack .btn {
+      align-self: flex-start;
     }
 
     .admin-row .input {
@@ -689,6 +811,11 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
       color: var(--text);
       outline: none;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .textarea {
+      min-height: 90px;
+      resize: vertical;
     }
 
     .input:focus,
