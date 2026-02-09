@@ -832,6 +832,30 @@ if ($metaTableReady) {
       flex-wrap: wrap;
     }
 
+    .tv-mode .video-overlay {
+      background: #000;
+      backdrop-filter: none;
+    }
+
+    .tv-mode .overlay-content {
+      padding: 0;
+      gap: 0;
+    }
+
+    .tv-mode .overlay-head,
+    .tv-mode .overlay-desc,
+    .tv-mode .overlay-actions {
+      display: none;
+    }
+
+    .tv-mode .overlay-video {
+      min-height: 100vh;
+      max-height: none;
+      border-radius: 0;
+      border: 0;
+      object-fit: cover;
+    }
+
     .overlay-close {
       background: rgba(255, 255, 255, 0.08);
     }

@@ -284,9 +284,14 @@ function nice_title_from_filename(string $fileName): string
 
                 const applyTvMode = (enabled) => {
                     tvMode = enabled;
-                    if (!tvToggle) return;
-                    tvToggle.classList.toggle('is-on', enabled);
-                    tvToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+                    document.body.classList.toggle('tv-mode', enabled);
+                    if (tvToggle) {
+                        tvToggle.classList.toggle('is-on', enabled);
+                        tvToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+                    }
+                    if (enabled && overlayOpen && overlayVideo) {
+                        requestVideoFullscreen(overlayVideo);
+                    }
                 };
 
                 const showTvToast = () => {
