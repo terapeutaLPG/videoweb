@@ -282,6 +282,10 @@ function nice_title_from_filename(string $fileName): string
                     const titleBtn = card.querySelector('.video-name-btn');
                     const media = card.querySelector('.video-media');
 
+                    if (!card.hasAttribute('tabindex')) {
+                        card.setAttribute('tabindex', '0');
+                    }
+
                     const handleOpen = () => openOverlay(card);
                     if (playBtn) playBtn.addEventListener('click', handleOpen);
                     if (titleBtn) titleBtn.addEventListener('click', handleOpen);
@@ -291,6 +295,13 @@ function nice_title_from_filename(string $fileName): string
                             handleOpen();
                         });
                     }
+
+                    card.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleOpen();
+                        }
+                    });
                 });
 
                 if (overlayClose) overlayClose.addEventListener('click', closeOverlay);
@@ -316,6 +327,46 @@ function nice_title_from_filename(string $fileName): string
 
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') closeOverlay();
+                });
+
+                const getFocusable = () => {
+                    const selector = [
+                        'a[href]',
+                        'button',
+                        'input',
+                        'textarea',
+                        'select',
+                        '[tabindex]:not([tabindex="-1"])'
+                    ].join(',');
+                    return Array.from(document.querySelectorAll(selector))
+                        .filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
+                };
+
+                const isTypingTarget = (el) => {
+                    if (!el) return false;
+                    const tag = el.tagName;
+                    return el.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+                };
+
+                document.addEventListener('keydown', (e) => {
+                    if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                    if (isTypingTarget(e.target) || e.target.tagName === 'VIDEO') return;
+
+                    const items = getFocusable();
+                    if (!items.length) return;
+
+                    const current = document.activeElement;
+                    let index = items.indexOf(current);
+                    if (index === -1) index = 0;
+
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                        index = (index + 1) % items.length;
+                    } else {
+                        index = (index - 1 + items.length) % items.length;
+                    }
+
+                    e.preventDefault();
+                    items[index].focus();
                 });
 
                 const forms = document.querySelectorAll('.video-form');

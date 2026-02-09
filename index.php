@@ -415,6 +415,12 @@ if ($metaTableReady) {
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
+    .video-card:focus-visible {
+      outline: none;
+      border-color: rgba(57, 211, 255, 0.5);
+      box-shadow: var(--focus), 0 16px 30px rgba(0, 0, 0, 0.28);
+    }
+
     .video-card:hover {
       transform: translateY(-4px);
       border-color: rgba(57, 211, 255, 0.35);
@@ -595,6 +601,8 @@ if ($metaTableReady) {
       box-shadow: var(--shadow);
       display: grid;
       gap: 14px;
+      max-height: calc(100vh - 80px);
+      overflow: auto;
     }
 
     .overlay-head {
