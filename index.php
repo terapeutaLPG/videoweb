@@ -802,6 +802,27 @@ if ($metaTableReady) {
       border-radius: var(--radius-md);
       background: #000;
       border: 1px solid rgba(255, 255, 255, 0.08);
+      object-fit: contain;
+    }
+
+    .overlay-video:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      max-height: none;
+      border-radius: 0;
+      border: 0;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .overlay-video:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      max-height: none;
+      border-radius: 0;
+      border: 0;
+      object-fit: cover;
+      background: #000;
     }
 
     .overlay-actions {
