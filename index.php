@@ -184,6 +184,11 @@ if ($metaTableReady) {
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       min-height: 100vh;
       color: var(--text);
@@ -195,6 +200,7 @@ if ($metaTableReady) {
         linear-gradient(180deg, var(--bg-0), var(--bg-1));
       position: relative;
       overflow-x: hidden;
+      overflow-y: auto;
     }
 
     body.is-locked {
@@ -225,7 +231,7 @@ if ($metaTableReady) {
     .container {
       max-width: 1280px;
       margin: 0 auto;
-      padding: 22px 18px 64px;
+      padding: 22px 18px 140px;
     }
 
     .topbar {
@@ -580,12 +586,13 @@ if ($metaTableReady) {
       position: fixed;
       inset: 0;
       display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      align-items: stretch;
+      justify-content: stretch;
+      padding: 0;
       background: rgba(6, 8, 14, 0.9);
       backdrop-filter: blur(10px);
       z-index: 120;
+      overflow-y: auto;
     }
 
     .video-overlay.is-open {
@@ -593,16 +600,18 @@ if ($metaTableReady) {
     }
 
     .overlay-content {
-      width: min(980px, 100%);
-      background: rgba(12, 16, 26, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius-lg);
-      padding: 18px;
+      width: 100%;
+      min-height: 100%;
+      background: rgba(12, 16, 26, 0.95);
+      border: 0;
+      border-radius: 0;
+      padding: 24px 22px 32px;
       box-shadow: var(--shadow);
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 14px;
-      max-height: calc(100vh - 80px);
-      overflow: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     .overlay-head {
@@ -610,6 +619,11 @@ if ($metaTableReady) {
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 10px 0 12px;
+      background: linear-gradient(180deg, rgba(12, 16, 26, 0.98), rgba(12, 16, 26, 0.8));
     }
 
     .overlay-title {
@@ -627,6 +641,9 @@ if ($metaTableReady) {
 
     .overlay-video {
       width: 100%;
+      flex: 1 1 auto;
+      min-height: 240px;
+      max-height: 68vh;
       border-radius: var(--radius-md);
       background: #000;
       border: 1px solid rgba(255, 255, 255, 0.08);

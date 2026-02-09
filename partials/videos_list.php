@@ -249,7 +249,6 @@ function nice_title_from_filename(string $fileName): string
                     if (!overlay || !overlayVideo) return;
                     overlay.classList.remove('is-open');
                     overlay.setAttribute('aria-hidden', 'true');
-                    document.body.classList.remove('is-locked');
                     overlayVideo.pause();
                     overlayVideo.removeAttribute('src');
                     overlayVideo.removeAttribute('poster');
@@ -273,7 +272,7 @@ function nice_title_from_filename(string $fileName): string
                     }
                     overlay.classList.add('is-open');
                     overlay.setAttribute('aria-hidden', 'false');
-                    document.body.classList.add('is-locked');
+                    overlay.scrollTop = 0;
                     overlayVideo.play();
                 };
 
