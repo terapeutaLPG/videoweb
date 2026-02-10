@@ -334,6 +334,7 @@ function nice_title_from_filename(string $fileName): string
                 let lightMode = false;
                 let overlayOpen = false;
                 let tvToastTimer = null;
+                let lightAnimTimer = null;
 
                 const applyTvMode = (enabled) => {
                     tvMode = enabled;
@@ -378,6 +379,21 @@ function nice_title_from_filename(string $fileName): string
                     tvToggle.classList.add('is-pressed');
                 };
 
+                const animateLightToggle = () => {
+                    if (lightToggle) {
+                        lightToggle.classList.remove('is-pressed');
+                        void lightToggle.offsetWidth;
+                        lightToggle.classList.add('is-pressed');
+                    }
+                    document.body.classList.remove('light-mode-anim');
+                    void document.body.offsetWidth;
+                    document.body.classList.add('light-mode-anim');
+                    if (lightAnimTimer) clearTimeout(lightAnimTimer);
+                    lightAnimTimer = setTimeout(() => {
+                        document.body.classList.remove('light-mode-anim');
+                    }, 320);
+                };
+
                 const loadTvMode = () => {
                     let saved = false;
                     try {
@@ -420,6 +436,7 @@ function nice_title_from_filename(string $fileName): string
                     lightToggle.addEventListener('click', () => {
                         const next = !lightMode;
                         applyLightMode(next);
+                        animateLightToggle();
                         try {
                             localStorage.setItem(LIGHT_STORAGE_KEY, next ? '1' : '0');
                         } catch (err) {
