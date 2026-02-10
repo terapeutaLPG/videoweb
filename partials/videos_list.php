@@ -157,9 +157,9 @@ function nice_title_from_filename(string $fileName): string
                         </div>
 
                         <div class="video-meta-actions">
-                            <button type="button" class="btn btn-secondary video-open" aria-label="Odtworz: <?= htmlspecialchars($title) ?>">
+                            <a class="btn btn-secondary video-open" href="<?= htmlspecialchars($url) ?>" aria-label="Odtworz: <?= htmlspecialchars($title) ?>">
                                 Odtworz
-                            </button>
+                            </a>
                         </div>
                     </div>
 
@@ -649,7 +649,12 @@ function nice_title_from_filename(string $fileName): string
                     const handleOpen = () => openOverlay(card);
                     if (playBtn) playBtn.addEventListener('click', handleOpen);
                     if (titleBtn) titleBtn.addEventListener('click', handleOpen);
-                    if (openBtn) openBtn.addEventListener('click', handleOpen);
+                    if (openBtn) {
+                        openBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            handleOpen();
+                        });
+                    }
                     if (media) {
                         media.addEventListener('click', (e) => {
                             if (e.target && e.target.closest && e.target.closest('.video-play')) return;
