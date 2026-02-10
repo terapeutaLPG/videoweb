@@ -658,7 +658,8 @@ function nice_title_from_filename(string $fileName): string
                     if (media) {
                         media.addEventListener('click', (e) => {
                             if (e.target && e.target.closest && e.target.closest('.video-play')) return;
-                            handleOpen();
+                            if (overlayOpen) return;
+                            showHoverPreview(card);
                         });
                     }
 
@@ -678,7 +679,7 @@ function nice_title_from_filename(string $fileName): string
                             card.classList.add('is-preview');
                             showHoverPreview(card);
                             previewTimer = null;
-                        }, 4000);
+                        }, 3000);
                     };
 
                     if (media) {
