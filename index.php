@@ -350,15 +350,6 @@ $iconUrl = $siteUrl . 'favicon.svg';
       animation: tv-press 0.35s ease;
     }
 
-    .light-toggle.is-on {
-      border-color: rgba(255, 214, 106, 0.55);
-      background: rgba(255, 214, 106, 0.18);
-      box-shadow: 0 0 0 2px rgba(255, 214, 106, 0.12) inset;
-    }
-
-    .light-toggle.is-pressed {
-      animation: light-press 0.35s ease;
-    }
 
     .tv-toast {
       position: fixed;
@@ -998,45 +989,6 @@ $iconUrl = $siteUrl . 'favicon.svg';
       background: #0a0c12;
     }
 
-    .light-mode {
-      background: #0b0e14;
-    }
-
-    .light-mode::before {
-      display: none;
-    }
-
-    .light-mode .topbar,
-    .light-mode .recent-card,
-    .light-mode .video-card,
-    .light-mode .card,
-    .light-mode .modal {
-      backdrop-filter: none;
-      box-shadow: none;
-      transition: none;
-      background: rgba(12, 16, 26, 0.92);
-    }
-
-    .light-mode .video-card:hover,
-    .light-mode .recent-card:hover,
-    .light-mode .topbar-link:hover,
-    .light-mode .btn:hover {
-      transform: none;
-    }
-
-    .light-mode .video-poster,
-    .light-mode .video-play {
-      transition: none;
-    }
-
-    .light-mode .hover-preview {
-      display: none;
-    }
-
-    .light-mode-anim .container,
-    .light-mode-anim .topbar {
-      animation: light-reveal 0.28s ease;
-    }
 
     .tv-mode .topbar,
     .tv-mode .recent-card,
@@ -1428,31 +1380,6 @@ $iconUrl = $siteUrl . 'favicon.svg';
       }
     }
 
-    @keyframes light-press {
-      0% {
-        transform: translateY(0) scale(1);
-      }
-
-      50% {
-        transform: translateY(1px) scale(0.97);
-      }
-
-      100% {
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    @keyframes light-reveal {
-      from {
-        opacity: 0.92;
-        transform: translateY(2px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
 
     @keyframes tv-toast {
       0% {

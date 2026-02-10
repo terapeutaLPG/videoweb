@@ -320,7 +320,6 @@ function nice_title_from_filename(string $fileName): string
                 const overlayVideo = document.getElementById('overlayVideo');
                 const overlayFullscreen = document.getElementById('overlayFullscreen');
                 const tvToggle = document.getElementById('tvToggle');
-                const lightToggle = document.getElementById('lightToggle');
                 const tvToast = document.getElementById('tvToast');
                 const hoverPreview = document.getElementById('hoverPreview');
                 const hoverPreviewThumb = document.getElementById('hoverPreviewThumb');
@@ -328,17 +327,14 @@ function nice_title_from_filename(string $fileName): string
                 const hoverPreviewDesc = document.getElementById('hoverPreviewDesc');
 
                 const TV_STORAGE_KEY = 'video_tv_mode';
-                const LIGHT_STORAGE_KEY = 'ui_light_mode';
                 const baseUrl = window.location.pathname + window.location.search;
                 let tvMode = false;
-                let lightMode = false;
                 let overlayOpen = false;
                 let tvToastTimer = null;
-                let lightAnimTimer = null;
 
                 const applyTvMode = (enabled) => {
                     tvMode = enabled;
-                    allowHoverPreview = !enabled && !prefersReducedMotion && !lightMode;
+                    allowHoverPreview = !enabled && !prefersReducedMotion;
                     document.body.classList.toggle('tv-mode', enabled);
                     if (tvToggle) {
                         tvToggle.classList.toggle('is-on', enabled);
@@ -348,17 +344,6 @@ function nice_title_from_filename(string $fileName): string
                     if (enabled && overlayOpen && overlayVideo) {
                         requestVideoFullscreen(overlayVideo);
                     }
-                };
-
-                const applyLightMode = (enabled) => {
-                    lightMode = enabled;
-                    allowHoverPreview = !enabled && !prefersReducedMotion && !tvMode;
-                    document.body.classList.toggle('light-mode', enabled);
-                    if (lightToggle) {
-                        lightToggle.classList.toggle('is-on', enabled);
-                        lightToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-                    }
-                    if (enabled) hideHoverPreview();
                 };
 
                 const showTvToast = () => {
@@ -379,20 +364,6 @@ function nice_title_from_filename(string $fileName): string
                     tvToggle.classList.add('is-pressed');
                 };
 
-                const animateLightToggle = () => {
-                    if (lightToggle) {
-                        lightToggle.classList.remove('is-pressed');
-                        void lightToggle.offsetWidth;
-                        lightToggle.classList.add('is-pressed');
-                    }
-                    document.body.classList.remove('light-mode-anim');
-                    void document.body.offsetWidth;
-                    document.body.classList.add('light-mode-anim');
-                    if (lightAnimTimer) clearTimeout(lightAnimTimer);
-                    lightAnimTimer = setTimeout(() => {
-                        document.body.classList.remove('light-mode-anim');
-                    }, 320);
-                };
 
                 const loadTvMode = () => {
                     let saved = false;
@@ -404,15 +375,6 @@ function nice_title_from_filename(string $fileName): string
                     applyTvMode(saved);
                 };
 
-                const loadLightMode = () => {
-                    let saved = false;
-                    try {
-                        saved = localStorage.getItem(LIGHT_STORAGE_KEY) === '1';
-                    } catch (err) {
-                        saved = false;
-                    }
-                    applyLightMode(saved);
-                };
 
                 if (tvToggle) {
                     loadTvMode();
@@ -431,21 +393,6 @@ function nice_title_from_filename(string $fileName): string
                     loadTvMode();
                 }
 
-                if (lightToggle) {
-                    loadLightMode();
-                    lightToggle.addEventListener('click', () => {
-                        const next = !lightMode;
-                        applyLightMode(next);
-                        animateLightToggle();
-                        try {
-                            localStorage.setItem(LIGHT_STORAGE_KEY, next ? '1' : '0');
-                        } catch (err) {
-                            // ignore storage errors
-                        }
-                    });
-                } else {
-                    loadLightMode();
-                }
 
                 const requestVideoFullscreen = (video) => {
                     if (!video) return;
