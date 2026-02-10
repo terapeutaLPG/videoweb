@@ -848,6 +848,10 @@ $iconUrl = $siteUrl . 'favicon.svg';
       color: var(--muted);
     }
 
+    .video-meta-actions {
+      margin-top: 10px;
+    }
+
     .video-info span {
       overflow: hidden;
       text-overflow: ellipsis;
