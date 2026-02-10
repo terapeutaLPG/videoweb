@@ -341,9 +341,6 @@ function nice_title_from_filename(string $fileName): string
                         tvToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
                     }
                     if (enabled) hideHoverPreview();
-                    if (enabled && overlayOpen && overlayVideo) {
-                        requestVideoFullscreen(overlayVideo);
-                    }
                 };
 
                 const showTvToast = () => {
@@ -606,9 +603,6 @@ function nice_title_from_filename(string $fileName): string
                         const playPromise = overlayVideo.play();
                         if (playPromise && typeof playPromise.catch === 'function') {
                             playPromise.catch(() => {});
-                        }
-                        if (tvMode) {
-                            requestVideoFullscreen(overlayVideo);
                         }
                     };
 

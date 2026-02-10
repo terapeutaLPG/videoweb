@@ -969,6 +969,7 @@ $iconUrl = $siteUrl . 'favicon.svg';
     .tv-mode .overlay-content {
       padding: 0;
       gap: 0;
+      height: 100vh;
     }
 
     .tv-mode .overlay-head,
@@ -980,6 +981,7 @@ $iconUrl = $siteUrl . 'favicon.svg';
     .tv-mode .overlay-video {
       min-height: 100vh;
       max-height: none;
+      height: 100vh;
       border-radius: 0;
       border: 0;
       object-fit: cover;
