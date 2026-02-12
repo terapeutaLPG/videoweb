@@ -12,14 +12,14 @@ $actionErr = $actionErr ?? '';
         </div>
         <div>
             <h2 class="section-title">Panel admina</h2>
-            <div class="muted">Zarzadzanie biblioteka i miniaturami.</div>
+            <div class="muted">Zarzadzanie biblioteka i miniaturami</div>
         </div>
     </div>
 
     <div class="admin-notes">
         <div>Aby dodac film, wrzuc plik MP4 do katalogu <b>/videos</b> przez FTP.</div>
         <div>Na kartach filmow ponizej masz opcje: zmiana nazwy, ustawienie miniaturki, usuwanie.</div>
-        <div>Opis filmu dodasz bezposrednio przy karcie w sekcji Opis.</div>
+        <div>Opis filmu dodasz bezposrednio przy karcie w sekcji opis.</div>
         <div>Miniaturki: JPG/PNG/WEBP (upload przy filmie).</div>
     </div>
 

@@ -41,5 +41,5 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    die('Blad polaczenia z baza: ' . htmlspecialchars($e->getMessage()));
+    die('Blad polaczenia z baza ' . htmlspecialchars($e->getMessage()));
 }
