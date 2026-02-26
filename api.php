@@ -272,6 +272,79 @@ switch ($endpoint) {
         fclose($fp);
         exit;
         break;
+    case 'like':
+        $user = checkAuth();
+        if (!$user) sendJson(['error' => 'Unauthorized'], 401);
+        $filename = $_GET['file'] ?? '';
+        if (empty($filename)) sendJson(['error' => 'Brak nazwy pliku'], 400);
+        if ($method === 'POST') {
+            try {
+                $stmt = $pdo->prepare('SELECT id FROM likes WHERE user_id = ? AND video_filename = ?');
+                $stmt->execute([$user['id'], $filename]);
+                if ($stmt->fetch()) {
+                    $pdo->prepare('DELETE FROM likes WHERE user_id = ? AND video_filename = ?')->execute([$user['id'], $filename]);
+                    $liked = false;
+                } else {
+                    $pdo->prepare('INSERT INTO likes (user_id, video_filename) VALUES (?, ?)')->execute([$user['id'], $filename]);
+                    $liked = true;
+                }
+                $count = $pdo->prepare('SELECT COUNT(*) FROM likes WHERE video_filename = ?');
+                $count->execute([$filename]);
+                sendJson(['liked' => $liked, 'count' => (int)$count->fetchColumn()]);
+            } catch (PDOException $e) {
+                sendJson(['error' => $e->getMessage()], 500);
+            }
+        } elseif ($method === 'GET') {
+            try {
+                $stmt = $pdo->prepare('SELECT COUNT(*) FROM likes WHERE video_filename = ?');
+                $stmt->execute([$filename]);
+                $total = (int)$stmt->fetchColumn();
+                $stmt2 = $pdo->prepare('SELECT id FROM likes WHERE user_id = ? AND video_filename = ?');
+                $stmt2->execute([$user['id'], $filename]);
+                sendJson(['liked' => (bool)$stmt2->fetch(), 'count' => $total]);
+            } catch (PDOException $e) {
+                sendJson(['error' => $e->getMessage()], 500);
+            }
+        }
+        break;
+
+    case 'comments':
+        $user = checkAuth();
+        if (!$user) sendJson(['error' => 'Unauthorized'], 401);
+        $filename = $_GET['file'] ?? '';
+        if (empty($filename)) sendJson(['error' => 'Brak nazwy pliku'], 400);
+        if ($method === 'POST') {
+            $data = json_decode(file_get_contents('php://input'), true);
+            $content = trim($data['content'] ?? '');
+            if (empty($content)) sendJson(['error' => 'Komentarz pusty'], 400);
+            if (mb_strlen($content) > 500) sendJson(['error' => 'Max 500 znaków'], 400);
+            try {
+                $pdo->prepare('INSERT INTO comments (user_id, video_filename, content) VALUES (?, ?, ?)')->execute([$user['id'], $filename, $content]);
+                sendJson(['success' => true, 'comment' => ['id' => (int)$pdo->lastInsertId(), 'email' => $user['email'], 'content' => $content, 'created_at' => date('Y-m-d H:i:s')]]);
+            } catch (PDOException $e) {
+                sendJson(['error' => $e->getMessage()], 500);
+            }
+        } elseif ($method === 'GET') {
+            try {
+                $stmt = $pdo->prepare('SELECT c.id, u.email, c.content, c.created_at FROM comments c JOIN users u ON c.user_id = u.id WHERE c.video_filename = ? ORDER BY c.created_at DESC LIMIT 50');
+                $stmt->execute([$filename]);
+                sendJson(['comments' => $stmt->fetchAll()]);
+            } catch (PDOException $e) {
+                sendJson(['error' => $e->getMessage()], 500);
+            }
+        } elseif ($method === 'DELETE') {
+            $data = json_decode(file_get_contents('php://input'), true);
+            $commentId = (int)($data['id'] ?? 0);
+            if (!$commentId) sendJson(['error' => 'Brak ID'], 400);
+            try {
+                $pdo->prepare('DELETE FROM comments WHERE id = ? AND user_id = ?')->execute([$commentId, $user['id']]);
+                sendJson(['success' => true]);
+            } catch (PDOException $e) {
+                sendJson(['error' => $e->getMessage()], 500);
+            }
+        }
+        break;
+
 
     default:
         sendJson(['error' => 'Unknown endpoint', 'available' => ['register', 'login', 'logout', 'videos', 'stream']], 404);
