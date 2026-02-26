@@ -6,12 +6,10 @@ require __DIR__ . '/db.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $endpoint = $_GET['endpoint'] ?? '';
 
-// Autoryzacja JWT/Token
 function checkAuth()
 {
     $token = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    // Walidacja tokenu z bazy
-    return true; // lub false
+    return true;
 }
 
 switch ($endpoint) {
@@ -27,7 +25,6 @@ switch ($endpoint) {
 
             if ($user && password_verify($password, $user['password'])) {
                 $token = bin2hex(random_bytes(32));
-                // Zapisz token w bazie
                 echo json_encode(['success' => true, 'token' => $token, 'user' => $user]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Błędne dane']);
@@ -86,7 +83,6 @@ switch ($endpoint) {
             $start = 0;
             $end = $size - 1;
 
-            // Range header dla streamingu
             if (isset($_SERVER['HTTP_RANGE'])) {
                 list(, $range) = explode('=', $_SERVER['HTTP_RANGE'], 2);
                 list($start, $end_temp) = explode('-', $range);
