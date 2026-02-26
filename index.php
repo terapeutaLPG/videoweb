@@ -5,18 +5,27 @@ $actionMsg = '';
 $actionErr = '';
 
 $metaTableReady = false;
+// try {
+//   $pdo->exec(
+//     'CREATE TABLE IF NOT EXISTS video_meta (
+//       file_name VARCHAR(255) PRIMARY KEY,
+//       description TEXT NOT NULL,
+//       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+//     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+//   );
+//   $metaTableReady = true;
+// } catch (PDOException $e) {
+//   $actionErr = 'Nie udalo sie przygotowac bazy opisow.';
+// }
+// Sprawdź czy tabela istnieje
+$metaTableReady = false;
 try {
-  $pdo->exec(
-    'CREATE TABLE IF NOT EXISTS video_meta (
-      file_name VARCHAR(255) PRIMARY KEY,
-      description TEXT NOT NULL,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
-  );
-  $metaTableReady = true;
+  $stmt = $pdo->query("SHOW TABLES LIKE 'video_meta'");
+  $metaTableReady = $stmt->rowCount() > 0;
 } catch (PDOException $e) {
-  $actionErr = 'Nie udalo sie przygotowac bazy opisow.';
+  $metaTableReady = false;
 }
+
 
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
   $action = $_POST['action'] ?? '';

@@ -169,10 +169,11 @@ switch ($endpoint) {
             }
 
             $metaData = [];
-            $stmt = $pdo->query("SELECT filename, description FROM video_meta");
+            $stmt = $pdo->query("SELECT file_name, description FROM video_meta");
             foreach ($stmt->fetchAll() as $row) {
-                $metaData[$row['filename']] = $row['description'];
+                $metaData[$row['file_name']] = $row['description'];
             }
+
 
             foreach (scandir($videoDir) as $file) {
                 if (pathinfo($file, PATHINFO_EXTENSION) === 'mp4') {
