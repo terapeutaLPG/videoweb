@@ -20,11 +20,25 @@ $metaTableReady = false;
 // Sprawdź czy tabela istnieje
 $metaTableReady = false;
 try {
-  $stmt = $pdo->query("SHOW TABLES LIKE 'video_meta'");
-  $metaTableReady = $stmt->rowCount() > 0;
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS video_meta (
+      file_name VARCHAR(255) PRIMARY KEY,
+      description TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+  $metaTableReady = true;
 } catch (PDOException $e) {
-  $metaTableReady = false;
+  error_log('video_meta error: ' . $e->getMessage());
 }
+
+// $metaTableReady = false;
+// try {
+//   $stmt = $pdo->query("SHOW TABLES LIKE 'video_meta'");
+//   $metaTableReady = $stmt->rowCount() > 0;
+// } catch (PDOException $e) {
+//   $metaTableReady = false;
+// }
 
 
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST') {
