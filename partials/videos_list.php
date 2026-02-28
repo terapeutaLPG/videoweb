@@ -26,7 +26,6 @@ usort($videos, function ($a, $b) {
 
 function video_public_url(string $fileName): string
 {
-    // spacje i znaki w nazwie pliku
     return '/videos/' . rawurlencode($fileName);
 }
 
@@ -37,8 +36,158 @@ function nice_title_from_filename(string $fileName): string
     $title = preg_replace('/\s+/', ' ', $title);
     return trim($title);
 }
+
+$likeCounts = [];
+$commentCounts = [];
+$allComments = [];
+try {
+    $stmt = $pdo->query("SELECT video_filename, COUNT(*) as cnt FROM likes GROUP BY video_filename");
+    foreach ($stmt->fetchAll() as $row) $likeCounts[$row['video_filename']] = (int)$row['cnt'];
+
+    $stmt = $pdo->query("SELECT video_filename, COUNT(*) as cnt FROM comments GROUP BY video_filename");
+    foreach ($stmt->fetchAll() as $row) $commentCounts[$row['video_filename']] = (int)$row['cnt'];
+
+    $stmt = $pdo->query("SELECT c.video_filename, u.email, c.content, c.created_at FROM comments c JOIN users u ON c.user_id = u.id ORDER BY c.created_at DESC LIMIT 200");
+    foreach ($stmt->fetchAll() as $row) $allComments[$row['video_filename']][] = $row;
+} catch (Exception $e) {
+}
+
 ?>
 
+<style>
+    .video-stats {
+        display: flex;
+        gap: 8px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted, #888);
+    }
+
+    .stat-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .stat-sep {
+        opacity: 0.4;
+    }
+
+    .overlay-stats {
+        display: flex;
+        gap: 12px;
+        margin: 8px 0 16px;
+        font-size: 13px;
+        color: #aaa;
+    }
+
+    .overlay-comments {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .overlay-comments-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 12px;
+    }
+
+    .comment-item {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+    }
+
+    .comment-author {
+        font-size: 11px;
+        color: #39D3FF;
+        font-weight: 600;
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .comment-date {
+        color: #555;
+        font-size: 10px;
+    }
+
+    .comment-text {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.5;
+    }
+
+    .no-comments {
+        color: #555;
+        font-size: 13px;
+        text-align: center;
+        padding: 16px 0;
+    }
+
+    .overlay-comment-form {
+        margin: 12px 0 0;
+    }
+
+    .ocf-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ocf-textarea {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 13px;
+        padding: 10px 12px;
+        resize: none;
+        width: 100%;
+        box-sizing: border-box;
+        outline: none;
+    }
+
+    .ocf-textarea:focus {
+        border-color: rgba(57, 211, 255, 0.5);
+    }
+
+    .ocf-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-like {
+        background: rgba(255, 107, 122, 0.15);
+        border: 1px solid rgba(255, 107, 122, 0.3);
+        color: #FF6B7A;
+    }
+
+    .btn-like.liked {
+        background: rgba(255, 107, 122, 0.3);
+        border-color: #FF6B7A;
+    }
+
+    .ocf-msg {
+        font-size: 12px;
+        color: #39D3FF;
+        min-height: 16px;
+    }
+
+    .topbar-user {
+        font-size: 12px;
+        padding: 0 4px;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
 <section class="videos-section">
     <div class="videos-head">
         <div>
@@ -156,6 +305,12 @@ function nice_title_from_filename(string $fileName): string
                             <?php endif; ?>
                         </div>
 
+
+                        <div class="video-stats">
+                            <span class="stat-item">❤️ <?= $likeCounts[$file] ?? 0 ?></span>
+                            <span class="stat-sep">·</span>
+                            <span class="stat-item">💬 <?= $commentCounts[$file] ?? 0 ?></span>
+                        </div>
                         <div class="video-meta-actions">
                             <a class="btn btn-secondary video-open" href="<?= htmlspecialchars($url) ?>" aria-label="Odtworz: <?= htmlspecialchars($title) ?>">
                                 Odtworz
@@ -251,6 +406,27 @@ function nice_title_from_filename(string $fileName): string
                     <button type="button" class="btn overlay-close" id="overlayClose">Powrot</button>
                 </div>
                 <div class="overlay-desc" id="overlayDesc"></div>
+
+                <div id="overlayStats" class="overlay-stats" style="display:none">
+                    ❤️ <span id="overlayLikeCount">0</span> lajków &nbsp;·&nbsp;
+                    💬 <span id="overlayCommentCount">0</span> komentarzy
+                </div>
+                <div id="overlayComments" class="overlay-comments" style="display:none"></div>
+
+                <?php if (!empty($_SESSION['user_email']) || !empty($_SESSION['is_admin'])): ?>
+                    <div id="overlayCommentForm" class="overlay-comment-form" style="display:none">
+                        <div class="ocf-inner">
+                            <textarea id="overlayCommentText" class="ocf-textarea" placeholder="Napisz komentarz..." maxlength="500" rows="2"></textarea>
+                            <div class="ocf-actions">
+                                <button type="button" id="overlayLikeBtn" class="btn btn-like" onclick="toggleLikeWeb()">
+                                    <span id="overlayLikeIcon">❤️</span> Lubię to
+                                </button>
+                                <button type="button" class="btn" onclick="submitCommentWeb()">Dodaj komentarz</button>
+                            </div>
+                            <div id="overlayCommentMsg" class="ocf-msg"></div>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <video class="overlay-video" id="overlayVideo" controls preload="metadata"></video>
                 <div class="overlay-actions">
                     <button type="button" class="btn" id="overlayFullscreen">Pelny ekran</button>
@@ -273,6 +449,183 @@ function nice_title_from_filename(string $fileName): string
 
         <script>
             (function() {
+
+                const videoStats = <?php
+                                    $statsJson = [];
+                                    foreach ($allComments as $fname => $cmts) {
+                                        $statsJson[$fname] = ['likes' => $likeCounts[$fname] ?? 0, 'comments' => array_slice($cmts, 0, 20)];
+                                    }
+                                    foreach ($likeCounts as $fname => $cnt) {
+                                        if (!isset($statsJson[$fname])) $statsJson[$fname] = ['likes' => $cnt, 'comments' => []];
+                                    }
+                                    echo json_encode($statsJson, JSON_UNESCAPED_UNICODE);
+                                    ?>;
+
+                function shortEmail(e) {
+                    const n = e.split('@')[0];
+                    return n.length <= 3 ? n + '***' : n.substring(0, 3) + '***';
+                }
+
+
+                let currentOverlayFilename = null;
+                let currentLiked = false;
+
+                function toggleLikeWeb() {
+                    if (!currentOverlayFilename) return;
+                    const btn = document.getElementById('overlayLikeBtn');
+                    if (btn) btn.disabled = true;
+                    fetch('/web_action.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                action: 'like',
+                                filename: currentOverlayFilename
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.liked !== undefined) {
+                                currentLiked = data.liked;
+                                const icon = document.getElementById('overlayLikeIcon');
+                                if (icon) icon.textContent = data.liked ? '❤️' : '🤍';
+                                if (btn) btn.classList.toggle('liked', data.liked);
+                                const likeCount = document.getElementById('overlayLikeCount');
+                                if (likeCount) likeCount.textContent = data.count;
+                            }
+                            if (btn) btn.disabled = false;
+                        })
+                        .catch(() => {
+                            if (btn) btn.disabled = false;
+                        });
+                }
+
+                function submitCommentWeb() {
+                    if (!currentOverlayFilename) return;
+                    const textarea = document.getElementById('overlayCommentText');
+                    const msg = document.getElementById('overlayCommentMsg');
+                    const content = textarea ? textarea.value.trim() : '';
+                    if (!content) {
+                        if (msg) {
+                            msg.style.color = '#FF6B7A';
+                            msg.textContent = 'Wpisz komentarz!';
+                        }
+                        return;
+                    }
+                    fetch('/web_action.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                action: 'comment',
+                                filename: currentOverlayFilename,
+                                content: content
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (textarea) textarea.value = '';
+                                if (msg) {
+                                    msg.style.color = '#39D3FF';
+                                    msg.textContent = 'Komentarz dodany! ✓';
+                                    setTimeout(() => {
+                                        msg.textContent = '';
+                                    }, 3000);
+                                }
+                                fetch('/web_action.php', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            action: 'get_comments',
+                                            filename: currentOverlayFilename
+                                        })
+                                    })
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        if (d.comments) renderCommentsList(d.comments);
+                                    });
+                            } else {
+                                if (msg) {
+                                    msg.style.color = '#FF6B7A';
+                                    msg.textContent = data.error || 'Błąd!';
+                                }
+                            }
+                        })
+                        .catch(() => {
+                            if (msg) {
+                                msg.style.color = '#FF6B7A';
+                                msg.textContent = 'Błąd połączenia';
+                            }
+                        });
+                }
+
+                function renderCommentsList(comments) {
+                    const commentsEl = document.getElementById('overlayComments');
+                    const countEl = document.getElementById('overlayCommentCount');
+                    if (!commentsEl) return;
+                    if (countEl) countEl.textContent = comments.length;
+                    let html = '<div class="overlay-comments-title">💬 Komentarze (' + comments.length + ')</div>';
+                    if (!comments.length) {
+                        html += '<div class="no-comments">Brak komentarzy.</div>';
+                    } else {
+                        comments.forEach(c => {
+                            html += '<div class="comment-item"><div class="comment-author"><span>' + shortEmail(c.email) + '</span><span class="comment-date">' + c.created_at.substring(0, 16) + '</span></div><div class="comment-text">' + c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+                        });
+                    }
+                    commentsEl.innerHTML = html;
+                }
+
+
+                function renderOverlayStats(filename) {
+                    const statsEl = document.getElementById('overlayStats');
+                    const commentsEl = document.getElementById('overlayComments');
+                    if (!statsEl || !commentsEl) return;
+                    const data = videoStats[filename] || {
+                        likes: 0,
+                        comments: []
+                    };
+                    document.getElementById('overlayLikeCount').textContent = data.likes;
+                    document.getElementById('overlayCommentCount').textContent = data.comments.length;
+                    statsEl.style.display = 'flex';
+                    commentsEl.style.display = 'block';
+                    let html = '<div class="overlay-comments-title">💬 Komentarze (' + data.comments.length + ')</div>';
+                    if (!data.comments.length) {
+                        html += '<div class="no-comments">Brak komentarzy.</div>';
+                    } else {
+                        data.comments.forEach(c => {
+                            html += '<div class="comment-item"><div class="comment-author"><span>' + shortEmail(c.email) + '</span><span class="comment-date">' + c.created_at.substring(0, 16) + '</span></div><div class="comment-text">' + c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+                        });
+                        currentOverlayFilename = filename;
+                        const form = document.getElementById('overlayCommentForm');
+                        if (form) form.style.display = 'block';
+                        fetch('/web_action.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    action: 'like_status',
+                                    filename: filename
+                                })
+                            })
+                            .then(r => r.json()).then(d => {
+                                if (d.liked !== undefined) {
+                                    currentLiked = d.liked;
+                                    const icon = document.getElementById('overlayLikeIcon');
+                                    if (icon) icon.textContent = d.liked ? '❤️' : '🤍';
+                                    const btn = document.getElementById('overlayLikeBtn');
+                                    if (btn) btn.classList.toggle('liked', d.liked);
+                                }
+                            }).catch(() => {});
+                    }
+                    commentsEl.innerHTML = html;
+                }
+
                 const input = document.getElementById('videoSearch');
                 const grid = document.getElementById('videosGrid');
                 const noResults = document.getElementById('noResults');
@@ -388,9 +741,7 @@ function nice_title_from_filename(string $fileName): string
                         if (next) showTvToast();
                         try {
                             localStorage.setItem(TV_STORAGE_KEY, next ? '1' : '0');
-                        } catch (err) {
-                            // ignore storage errors
-                        }
+                        } catch (err) {}
                     });
                 } else {
                     loadTvMode();
@@ -487,9 +838,7 @@ function nice_title_from_filename(string $fileName): string
                 const writeRecent = (data) => {
                     try {
                         localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(data));
-                    } catch (err) {
-                        // ignore storage errors
-                    }
+                    } catch (err) {}
                 };
 
                 const renderRecent = (data) => {
@@ -540,9 +889,7 @@ function nice_title_from_filename(string $fileName): string
                     recentData = null;
                     try {
                         localStorage.removeItem(RECENT_STORAGE_KEY);
-                    } catch (err) {
-                        // ignore storage errors
-                    }
+                    } catch (err) {}
                     renderRecent(null);
                 };
 
@@ -574,6 +921,8 @@ function nice_title_from_filename(string $fileName): string
 
                     overlayTitle.textContent = data.title || '';
                     overlayDesc.textContent = data.desc || 'Brak opisu.';
+                    const fname = (data.video || '').split('file=')[1];
+                    if (fname) renderOverlayStats(decodeURIComponent(fname));
                     overlayVideo.src = data.video || '';
                     if (data.poster) {
                         overlayVideo.setAttribute('poster', data.poster);
@@ -602,9 +951,7 @@ function nice_title_from_filename(string $fileName): string
                         if (startAt > 0 && overlayVideo.duration && startAt < overlayVideo.duration - 1) {
                             try {
                                 overlayVideo.currentTime = startAt;
-                            } catch (err) {
-                                // ignore seek errors
-                            }
+                            } catch (err) {}
                         }
                         const playPromise = overlayVideo.play();
                         if (playPromise && typeof playPromise.catch === 'function') {

@@ -1,5 +1,4 @@
 <?php
-// Konfiguracja sesji dla home.pl
 $sessionPath = __DIR__ . '/sessions';
 if (!is_dir($sessionPath)) {
     @mkdir($sessionPath, 0700, true);
@@ -8,7 +7,6 @@ if (is_dir($sessionPath) && is_writable($sessionPath)) {
     session_save_path($sessionPath);
 }
 
-// Ustawienia sesji i start (jeśli jeszcze nie uruchomiona)
 if (session_status() !== PHP_SESSION_ACTIVE) {
     ini_set('session.use_strict_mode', '1');
     session_name('VIDEOWEBSESSID');

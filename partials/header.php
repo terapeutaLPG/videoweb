@@ -1,4 +1,5 @@
-<?php $isAdmin = !empty($isAdmin); ?>
+<?php $isAdmin = !empty($isAdmin);
+$isUser = !empty($_SESSION['user_email']); ?>
 <header class="topbar">
   <div class="topbar-left">
     <a class="topbar-title" href="/index.php" aria-label="Strona glowna">
@@ -19,6 +20,10 @@
       <span class="tv-label">TV</span>
     </button>
     <?php if ($isAdmin): ?>
+      <span class="topbar-user muted">Admin</span>
+      <a href="/logout.php" class="topbar-link">Wyloguj</a>
+    <?php elseif ($isUser): ?>
+      <span class="topbar-user muted"><?= htmlspecialchars($_SESSION['user_email']) ?></span>
       <a href="/logout.php" class="topbar-link">Wyloguj</a>
     <?php else: ?>
       <button type="button" id="openLogin" class="topbar-link">Zaloguj</button>
