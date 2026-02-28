@@ -4,13 +4,11 @@ header('Cache-Control: no-store');
 
 require __DIR__ . '/db.php';
 
-// Sprawdź czy user jest zalogowany (admin lub zwykły user)
 $userId = null;
 $userEmail = null;
 
 if (!empty($_SESSION['is_admin'])) {
-    // Admin - użyj specjalnego ID lub pobierz z bazy
-    $userId = 0; // admin nie ma ID w tabeli users
+    $userId = 0;
     $userEmail = 'admin';
 } elseif (!empty($_SESSION['user_id'])) {
     $userId = (int)$_SESSION['user_id'];
@@ -21,14 +19,14 @@ $data = json_decode(file_get_contents('php://input'), true);
 $action = $data['action'] ?? '';
 $filename = trim($data['filename'] ?? '');
 
-function sendJson($data, $code = 200) {
+function sendJson($data, $code = 200)
+{
     http_response_code($code);
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 if (empty($filename)) sendJson(['error' => 'Brak nazwy pliku'], 400);
-
 switch ($action) {
 
     case 'like_status':
@@ -88,11 +86,14 @@ switch ($action) {
         sendJson(['error' => 'Nieznana akcja'], 400);
 }
 
-function getLikeCount($filename) {
+function getLikeCount($filename)
+{
     global $pdo;
     try {
         $s = $pdo->prepare('SELECT COUNT(*) FROM likes WHERE video_filename = ?');
         $s->execute([$filename]);
         return (int)$s->fetchColumn();
-    } catch (Exception $e) { return 0; }
+    } catch (Exception $e) {
+        return 0;
+    }
 }
