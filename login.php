@@ -19,13 +19,12 @@ if ($username === $adminUser && $password === $adminPass) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
     $stmt->execute([$username]);
     $user = $stmt->fetch();
-
     if ($user && password_verify($password, $user['password'])) {
         session_regenerate_id(true);
-        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_id']    = (int)$user['id'];
         $_SESSION['user_email'] = $user['email'];
         unset($_SESSION['login_error']);
         header('Location: /index.php');
@@ -34,6 +33,6 @@ try {
 } catch (PDOException $e) {
 }
 
-$_SESSION['login_error'] = 'Błędny login lub hasło';
+$_SESSION['login_error'] = 'Błędny login lub hasło.';
 header('Location: /index.php#login');
 exit;

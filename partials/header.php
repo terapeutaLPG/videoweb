@@ -26,7 +26,50 @@ $isUser = !empty($_SESSION['user_email']); ?>
       <span class="topbar-user muted"><?= htmlspecialchars($_SESSION['user_email']) ?></span>
       <a href="/logout.php" class="topbar-link">Wyloguj</a>
     <?php else: ?>
-      <button type="button" id="openLogin" class="topbar-link">Zaloguj</button>
+      <button type="button" onclick="openLoginModal('register')" class="topbar-link topbar-link--register">Zarejestruj</button>
+      <button type="button" id="openLogin" onclick="openLoginModal('login')" class="topbar-link">Zaloguj</button>
     <?php endif; ?>
   </div>
 </header>
+
+<style>
+  .topbar-link--register {
+    background: linear-gradient(135deg, rgba(111, 92, 255, 0.22), rgba(57, 211, 255, 0.16));
+    border-color: rgba(111, 92, 255, 0.45);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .topbar-link--register::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+    background-size: 200% auto;
+    animation: topbar-shimmer 2.2s linear infinite;
+  }
+
+  .topbar-link--register:hover {
+    border-color: rgba(57, 211, 255, 0.6);
+    box-shadow: 0 0 18px rgba(111, 92, 255, 0.35);
+  }
+
+  .topbar-user {
+    font-size: 12px;
+    padding: 0 4px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @keyframes topbar-shimmer {
+    0% {
+      background-position: -200% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
+  }
+</style>
