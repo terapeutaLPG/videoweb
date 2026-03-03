@@ -12,6 +12,13 @@ $isUser = !empty($_SESSION['user_email']); ?>
   </div>
 
   <div class="topbar-actions">
+    <a href="/app-release.apk" download="FilmyPL.apk" class="topbar-link topbar-link--download" title="Pobierz aplikację na Android">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" width="16" height="16">
+        <path d="M12 3v13M7 11l5 5 5-5" />
+        <path d="M5 21h14" />
+      </svg>
+      <span>Pobierz apkę</span>
+    </a>
     <button type="button" id="tvToggle" class="topbar-link tv-toggle" aria-pressed="false" aria-label="Auto pelny ekran" title="Auto pelny ekran">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
         <rect x="3" y="6" width="18" height="12" rx="2" />
@@ -61,6 +68,38 @@ $isUser = !empty($_SESSION['user_email']); ?>
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .topbar-link--download {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(80, 220, 170, 0.18), rgba(57, 211, 255, 0.12));
+    border-color: rgba(80, 220, 170, 0.4);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    position: relative;
+    overflow: hidden;
+    animation: apk-pulse 2.5s ease-in-out infinite;
+  }
+
+  .topbar-link--download:hover {
+    border-color: rgba(80, 220, 170, 0.7);
+    box-shadow: 0 0 18px rgba(80, 220, 170, 0.3);
+    animation: none;
+  }
+
+  @keyframes apk-pulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(80, 220, 170, 0);
+    }
+
+    50% {
+      box-shadow: 0 0 10px 2px rgba(80, 220, 170, 0.25);
+    }
   }
 
   @keyframes topbar-shimmer {
