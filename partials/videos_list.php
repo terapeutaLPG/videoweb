@@ -187,51 +187,6 @@ try {
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-
-    .overlay-login-prompt {
-        display: none;
-    }
-
-    .olp-inner {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        padding: 22px 18px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px dashed rgba(255, 255, 255, 0.12);
-        border-radius: 14px;
-        text-align: center;
-        margin: 10px 0;
-    }
-
-    .olp-icon {
-        font-size: 28px;
-    }
-
-    .olp-text {
-        font-size: 14px;
-        color: var(--muted);
-        line-height: 1.5;
-    }
-
-    .olp-text strong {
-        color: var(--text);
-    }
-
-    .olp-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .comments-loading {
-        color: var(--muted);
-        font-size: 13px;
-        text-align: center;
-        padding: 16px 0;
-    }
 </style>
 <section class="videos-section">
     <div class="videos-head">
@@ -452,11 +407,11 @@ try {
                 </div>
                 <div class="overlay-desc" id="overlayDesc"></div>
 
-
                 <div id="overlayStats" class="overlay-stats" style="display:none">
                     ❤️ <span id="overlayLikeCount">0</span> lajków &nbsp;·&nbsp;
                     💬 <span id="overlayCommentCount">0</span> komentarzy
                 </div>
+                <div id="overlayComments" class="overlay-comments" style="display:none"></div>
 
                 <?php if (!empty($_SESSION['user_email']) || !empty($_SESSION['is_admin'])): ?>
                     <div id="overlayCommentForm" class="overlay-comment-form" style="display:none">
@@ -469,20 +424,6 @@ try {
                                 <button type="button" class="btn" onclick="submitCommentWeb()">Dodaj komentarz</button>
                             </div>
                             <div id="overlayCommentMsg" class="ocf-msg"></div>
-                        </div>
-                    </div>
-                    <div id="overlayComments" class="overlay-comments" style="display:none"></div>
-                <?php else: ?>
-                    <div id="overlayLoginPrompt" class="overlay-login-prompt" style="display:none">
-                        <div class="olp-inner">
-                            <span class="olp-icon">🔒</span>
-                            <div class="olp-text">
-                                <strong>Zaloguj się</strong>, aby zobaczyć komentarze i lajki.
-                            </div>
-                            <div class="olp-actions">
-                                <button type="button" class="btn" onclick="closeOverlay(); setTimeout(()=>openLoginModal('login'),300)">Zaloguj się</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeOverlay(); setTimeout(()=>openLoginModal('register'),300)">Zarejestruj się</button>
-                            </div>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -509,202 +450,178 @@ try {
         <script>
             (function() {
 
-                    const videoStats = <?php
-                                        $statsJson = [];
-                                        foreach ($allComments as $fname => $cmts) {
-                                            $statsJson[$fname] = ['likes' => $likeCounts[$fname] ?? 0, 'comments' => array_slice($cmts, 0, 20)];
-                                        }
-                                        foreach ($likeCounts as $fname => $cnt) {
-                                            if (!isset($statsJson[$fname])) $statsJson[$fname] = ['likes' => $cnt, 'comments' => []];
-                                        }
-                                        echo json_encode($statsJson, JSON_UNESCAPED_UNICODE);
-                                        ?>;
+                const videoStats = <?php
+                                    $statsJson = [];
+                                    foreach ($allComments as $fname => $cmts) {
+                                        $statsJson[$fname] = ['likes' => $likeCounts[$fname] ?? 0, 'comments' => array_slice($cmts, 0, 20)];
+                                    }
+                                    foreach ($likeCounts as $fname => $cnt) {
+                                        if (!isset($statsJson[$fname])) $statsJson[$fname] = ['likes' => $cnt, 'comments' => []];
+                                    }
+                                    echo json_encode($statsJson, JSON_UNESCAPED_UNICODE);
+                                    ?>;
 
-                    function shortEmail(e) {
-                        const n = e.split('@')[0];
-                        return n.length <= 3 ? n + '***' : n.substring(0, 3) + '***';
-                    }
+                function shortEmail(e) {
+                    const n = e.split('@')[0];
+                    return n.length <= 3 ? n + '***' : n.substring(0, 3) + '***';
+                }
 
 
-                    let currentOverlayFilename = null;
-                    let currentLiked = false;
+                let currentOverlayFilename = null;
+                let currentLiked = false;
 
-                    function toggleLikeWeb() {
-                        if (!currentOverlayFilename) return;
-                        const btn = document.getElementById('overlayLikeBtn');
-                        if (btn) btn.disabled = true;
-                        fetch('/web_action.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    action: 'like',
-                                    filename: currentOverlayFilename
-                                })
+                function toggleLikeWeb() {
+                    if (!currentOverlayFilename) return;
+                    const btn = document.getElementById('overlayLikeBtn');
+                    if (btn) btn.disabled = true;
+                    fetch('/web_action.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                action: 'like',
+                                filename: currentOverlayFilename
                             })
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data.liked !== undefined) {
-                                    currentLiked = data.liked;
-                                    const icon = document.getElementById('overlayLikeIcon');
-                                    if (icon) icon.textContent = data.liked ? '❤️' : '🤍';
-                                    if (btn) btn.classList.toggle('liked', data.liked);
-                                    const likeCount = document.getElementById('overlayLikeCount');
-                                    if (likeCount) likeCount.textContent = data.count;
-                                }
-                                if (btn) btn.disabled = false;
-                            })
-                            .catch(() => {
-                                if (btn) btn.disabled = false;
-                            });
-                    }
-
-                    function submitCommentWeb() {
-                        if (!currentOverlayFilename) return;
-                        const textarea = document.getElementById('overlayCommentText');
-                        const msg = document.getElementById('overlayCommentMsg');
-                        const content = textarea ? textarea.value.trim() : '';
-                        if (!content) {
-                            if (msg) {
-                                msg.style.color = '#FF6B7A';
-                                msg.textContent = 'Wpisz komentarz!';
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.liked !== undefined) {
+                                currentLiked = data.liked;
+                                const icon = document.getElementById('overlayLikeIcon');
+                                if (icon) icon.textContent = data.liked ? '❤️' : '🤍';
+                                if (btn) btn.classList.toggle('liked', data.liked);
+                                const likeCount = document.getElementById('overlayLikeCount');
+                                if (likeCount) likeCount.textContent = data.count;
                             }
-                            return;
+                            if (btn) btn.disabled = false;
+                        })
+                        .catch(() => {
+                            if (btn) btn.disabled = false;
+                        });
+                }
+
+                function submitCommentWeb() {
+                    if (!currentOverlayFilename) return;
+                    const textarea = document.getElementById('overlayCommentText');
+                    const msg = document.getElementById('overlayCommentMsg');
+                    const content = textarea ? textarea.value.trim() : '';
+                    if (!content) {
+                        if (msg) {
+                            msg.style.color = '#FF6B7A';
+                            msg.textContent = 'Wpisz komentarz!';
                         }
-                        fetch('/web_action.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    action: 'comment',
-                                    filename: currentOverlayFilename,
-                                    content: content
-                                })
+                        return;
+                    }
+                    fetch('/web_action.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                action: 'comment',
+                                filename: currentOverlayFilename,
+                                content: content
                             })
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data.success) {
-                                    if (textarea) textarea.value = '';
-                                    if (msg) {
-                                        msg.style.color = '#39D3FF';
-                                        msg.textContent = 'Komentarz dodany! ✓';
-                                        setTimeout(() => {
-                                            msg.textContent = '';
-                                        }, 3000);
-                                    }
-                                    fetch('/web_action.php', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify({
-                                                action: 'get_comments',
-                                                filename: currentOverlayFilename
-                                            })
-                                        })
-                                        .then(r => r.json())
-                                        .then(d => {
-                                            if (d.comments) renderCommentsList(d.comments);
-                                        });
-                                } else {
-                                    if (msg) {
-                                        msg.style.color = '#FF6B7A';
-                                        msg.textContent = data.error || 'Błąd!';
-                                    }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (textarea) textarea.value = '';
+                                if (msg) {
+                                    msg.style.color = '#39D3FF';
+                                    msg.textContent = 'Komentarz dodany! ✓';
+                                    setTimeout(() => {
+                                        msg.textContent = '';
+                                    }, 3000);
                                 }
-                            })
-                            .catch(() => {
+                                fetch('/web_action.php', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            action: 'get_comments',
+                                            filename: currentOverlayFilename
+                                        })
+                                    })
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        if (d.comments) renderCommentsList(d.comments);
+                                    });
+                            } else {
                                 if (msg) {
                                     msg.style.color = '#FF6B7A';
-                                    msg.textContent = 'Błąd połączenia';
+                                    msg.textContent = data.error || 'Błąd!';
                                 }
-                            });
+                            }
+                        })
+                        .catch(() => {
+                            if (msg) {
+                                msg.style.color = '#FF6B7A';
+                                msg.textContent = 'Błąd połączenia';
+                            }
+                        });
+                }
+
+                function renderCommentsList(comments) {
+                    const commentsEl = document.getElementById('overlayComments');
+                    const countEl = document.getElementById('overlayCommentCount');
+                    if (!commentsEl) return;
+                    if (countEl) countEl.textContent = comments.length;
+                    let html = '<div class="overlay-comments-title">💬 Komentarze (' + comments.length + ')</div>';
+                    if (!comments.length) {
+                        html += '<div class="no-comments">Brak komentarzy.</div>';
+                    } else {
+                        comments.forEach(c => {
+                            html += '<div class="comment-item"><div class="comment-author"><span>' + shortEmail(c.email) + '</span><span class="comment-date">' + c.created_at.substring(0, 16) + '</span></div><div class="comment-text">' + c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+                        });
                     }
-
-                    function renderCommentsList(comments) {
-                        const commentsEl = document.getElementById('overlayComments');
-                        const countEl = document.getElementById('overlayCommentCount');
-                        if (!commentsEl) return;
-                        if (countEl) countEl.textContent = comments.length;
-                        let html = '<div class="overlay-comments-title">💬 Komentarze (' + comments.length + ')</div>';
-                        if (!comments.length) {
-                            html += '<div class="no-comments">Brak komentarzy.</div>';
-                        } else {
-                            comments.forEach(c => {
-                                html += '<div class="comment-item"><div class="comment-author"><span>' + shortEmail(c.email) + '</span><span class="comment-date">' + c.created_at.substring(0, 16) + '</span></div><div class="comment-text">' + c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
-                            });
-                        }
-                        commentsEl.innerHTML = html;
-                    }
+                    commentsEl.innerHTML = html;
+                }
 
 
-                    function renderOverlayStats(filename) {
+                function renderOverlayStats(filename) {
+                    const statsEl = document.getElementById('overlayStats');
+                    const commentsEl = document.getElementById('overlayComments');
+                    if (!statsEl || !commentsEl) return;
+                    const data = videoStats[filename] || {
+                        likes: 0,
+                        comments: []
+                    };
+                    document.getElementById('overlayLikeCount').textContent = data.likes;
+                    document.getElementById('overlayCommentCount').textContent = data.comments.length;
+                    statsEl.style.display = 'flex';
+                    commentsEl.style.display = 'block';
+                    let html = '<div class="overlay-comments-title">💬 Komentarze (' + data.comments.length + ')</div>';
+                    if (!data.comments.length) {
+                        html += '<div class="no-comments">Brak komentarzy.</div>';
+                    } else {
+                        data.comments.forEach(c => {
+                            html += '<div class="comment-item"><div class="comment-author"><span>' + shortEmail(c.email) + '</span><span class="comment-date">' + c.created_at.substring(0, 16) + '</span></div><div class="comment-text">' + c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+                        });
                         currentOverlayFilename = filename;
-
-                        const statsEl = document.getElementById('overlayStats');
-                        if (statsEl) {
-                            const cached = videoStats[filename] || {
-                                likes: 0,
-                                comments: []
-                            };
-                            document.getElementById('overlayLikeCount').textContent = cached.likes;
-                            document.getElementById('overlayCommentCount').textContent = cached.comments.length;
-                            statsEl.style.display = 'flex';
-                        }
-
                         const form = document.getElementById('overlayCommentForm');
-                        const commentsEl = document.getElementById('overlayComments');
-                        if (form) {
-                            form.style.display = 'block';
-                            fetch('/web_action.php', {
+                        if (form) form.style.display = 'block';
+                        fetch('/web_action.php', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 },
                                 body: JSON.stringify({
                                     action: 'like_status',
-                                    filename
+                                    filename: filename
                                 })
-                            }).then(r => r.json()).then(d => {
+                            })
+                            .then(r => r.json()).then(d => {
                                 if (d.liked !== undefined) {
                                     currentLiked = d.liked;
                                     const icon = document.getElementById('overlayLikeIcon');
-                                    const btn = document.getElementById('overlayLikeBtn');
                                     if (icon) icon.textContent = d.liked ? '❤️' : '🤍';
+                                    const btn = document.getElementById('overlayLikeBtn');
                                     if (btn) btn.classList.toggle('liked', d.liked);
-                                    const likeCount = document.getElementById('overlayLikeCount');
-                                    if (likeCount) likeCount.textContent = d.count;
                                 }
                             }).catch(() => {});
-                        }
-
-                        if (commentsEl) {
-                            commentsEl.style.display = 'block';
-                            commentsEl.innerHTML = '<div class="comments-loading">Ładowanie komentarzy...</div>';
-                            fetch('/web_action.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    action: 'get_comments',
-                                    filename
-                                })
-                            }).then(r => r.json()).then(d => {
-                                if (d.comments) {
-                                    renderCommentsList(d.comments);
-                                    const countEl = document.getElementById('overlayCommentCount');
-                                    if (countEl) countEl.textContent = d.comments.length;
-                                }
-                            }).catch(() => {
-                                commentsEl.innerHTML = '<div class="no-comments">Nie udało się załadować komentarzy.</div>';
-                            });
-                        }
-
-                        const prompt = document.getElementById('overlayLoginPrompt');
-                        if (prompt) prompt.style.display = 'block';
                     }
                     commentsEl.innerHTML = html;
                 }
@@ -1204,7 +1121,8 @@ try {
 
                 window.addEventListener('pagehide', () => saveRecentProgress('close'));
 
-                recentData = readRecent(); renderRecent(recentData);
+                recentData = readRecent();
+                renderRecent(recentData);
 
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') closeOverlay();
@@ -1250,7 +1168,8 @@ try {
                     items[index].focus();
                 });
 
-                const forms = document.querySelectorAll('.video-form'); forms.forEach(form => {
+                const forms = document.querySelectorAll('.video-form');
+                forms.forEach(form => {
                     form.addEventListener('submit', () => {
                         const btn = form.querySelector('button[type="submit"]');
                         if (!btn) return;
