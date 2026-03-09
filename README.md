@@ -1,0 +1,1 @@
+Potwierdzenie zasad pracy
