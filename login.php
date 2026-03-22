@@ -10,15 +10,18 @@ require __DIR__ . '/db.php';
 $username = trim($_POST['username'] ?? '');
 $password = trim($_POST['password'] ?? '');
 
+error_log('LOGIN ATTEMPT: ' . $username);
+
 try {
     $stmt = $pdo->prepare('SELECT id, password FROM admins WHERE login = ?');
     $stmt->execute([$username]);
     $admin = $stmt->fetch();
     if ($admin && password_verify($password, $admin['password'])) {
+        error_log('ADMIN LOGIN SUCCESS: ' . $username);
         session_regenerate_id(true);
         $_SESSION['is_admin'] = true;
         unset($_SESSION['login_error']);
-        header('Location: /index.php');
+        header('Location: index.php');
         exit;
     }
 } catch (PDOException $e) {
@@ -33,12 +36,13 @@ try {
         $_SESSION['user_id']    = (int)$user['id'];
         $_SESSION['user_email'] = $user['email'];
         unset($_SESSION['login_error']);
-        header('Location: /index.php');
+        header('Location: index.php');
         exit;
     }
 } catch (PDOException $e) {
+    error_log('DB ERROR: ' . $e->getMessage());
 }
 
 $_SESSION['login_error'] = 'Błędny login lub hasło.';
-header('Location: /index.php#login');
+header('Location: index.php#login');
 exit;

@@ -13,17 +13,17 @@ $password2 = trim($_POST['reg_password2'] ?? '');
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $_SESSION['reg_error'] = 'Podaj poprawny adres email.';
-    header('Location: /index.php#register');
+    header('Location: index.php#register');
     exit;
 }
 if (mb_strlen($password) < 6) {
     $_SESSION['reg_error'] = 'Hasło musi mieć minimum 6 znaków.';
-    header('Location: /index.php#register');
+    header('Location: index.php#register');
     exit;
 }
 if ($password !== $password2) {
     $_SESSION['reg_error'] = 'Hasła nie są identyczne.';
-    header('Location: /index.php#register');
+    header('Location: index.php#register');
     exit;
 }
 try {
@@ -31,7 +31,7 @@ try {
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
         $_SESSION['reg_error'] = 'Ten adres email jest już zajęty.';
-        header('Location: /index.php#register');
+        header('Location: index.php#register');
         exit;
     }
 
@@ -45,10 +45,10 @@ try {
     $_SESSION['user_email'] = $email;
     unset($_SESSION['reg_error']);
 
-    header('Location: /index.php');
+    header('Location: index.php');
     exit;
 } catch (PDOException $e) {
     $_SESSION['reg_error'] = 'Błąd serwera. Spróbuj ponownie.';
-    header('Location: /index.php#register');
+    header('Location: index.php#register');
     exit;
 }

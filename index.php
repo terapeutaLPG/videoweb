@@ -17,7 +17,6 @@ $metaTableReady = false;
 // } catch (PDOException $e) {
 //   $actionErr = 'Nie udalo sie przygotowac bazy opisow.';
 // }
-// Sprawdź czy tabela istnieje
 $metaTableReady = false;
 try {
   $pdo->exec("

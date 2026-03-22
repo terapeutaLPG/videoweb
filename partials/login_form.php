@@ -24,7 +24,7 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
           </div>
         <?php endif; ?>
 
-        <form action="/login.php" method="post" id="loginForm">
+        <form action="login.php" method="post" id="loginForm">
           <div class="form-group">
             <label for="username">Email / Login</label>
             <input type="text" id="username" name="username" class="input" required autocomplete="email">
@@ -50,7 +50,7 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
           </div>
         <?php endif; ?>
 
-        <form action="/register.php" method="post" id="registerForm">
+        <form action="register.php" method="post" id="registerForm">
           <div class="form-group">
             <label for="reg_email">Adres email</label>
             <input type="email" id="reg_email" name="reg_email" class="input" required autocomplete="email" placeholder="np. jan@example.com">
