@@ -2,7 +2,7 @@
 $isUser = !empty($_SESSION['user_email']); ?>
 <header class="topbar">
   <div class="topbar-left">
-    <a class="topbar-title" href="/index.php" aria-label="Strona glowna">
+    <a class="topbar-title" href="index.php" aria-label="Strona glowna">
       Filmy PL
       <?php if ($isAdmin): ?>
         <span class="admin-badge">Admin</span>
@@ -27,11 +27,11 @@ $isUser = !empty($_SESSION['user_email']); ?>
       <span class="tv-label">TV</span>
     </button>
     <?php if ($isAdmin): ?>
-      <span class="topbar-user muted">Admin</span>
-      <a href="/logout.php" class="topbar-link">Wyloguj</a>
+      <span class="topbar-user muted">Admin: <?= htmlspecialchars($_SESSION['admin_login'] ?? 'panel') ?></span>
+      <a href="logout.php" class="topbar-link">Wyloguj</a>
     <?php elseif ($isUser): ?>
       <span class="topbar-user muted"><?= htmlspecialchars($_SESSION['user_email']) ?></span>
-      <a href="/logout.php" class="topbar-link">Wyloguj</a>
+      <a href="logout.php" class="topbar-link">Wyloguj</a>
     <?php else: ?>
       <button type="button" onclick="openLoginModal('register')" class="topbar-link topbar-link--register">Zarejestruj</button>
       <button type="button" id="openLogin" onclick="openLoginModal('login')" class="topbar-link">Zaloguj</button>
