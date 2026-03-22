@@ -25,9 +25,6 @@ $dbName = '40618186_filmy';
 $dbUser = '40618186_filmy';
 $dbPass = 'hggCcFbjf1';
 
-$adminUser = 'admin';
-$adminPass = 'CtwyMobM1T5aJdPxy2';
-
 try {
     $pdo = new PDO(
         "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4",

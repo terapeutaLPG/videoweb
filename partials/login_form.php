@@ -42,7 +42,6 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
         <p class="lm-switch-hint">Nie masz konta? <button type="button" class="lm-link" onclick="switchTab('register')">Zarejestruj się</button></p>
       </div>
 
-      <!-- Panel: Rejestracja -->
       <div id="lmPanelRegister" class="lm-panel <?= $showReg ? '' : 'lm-panel--hidden' ?>">
         <?php if (!empty($_SESSION['reg_error'])): ?>
           <div class="login-error">

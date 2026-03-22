@@ -10,12 +10,18 @@ require __DIR__ . '/db.php';
 $username = trim($_POST['username'] ?? '');
 $password = trim($_POST['password'] ?? '');
 
-if ($username === $adminUser && $password === $adminPass) {
-    session_regenerate_id(true);
-    $_SESSION['is_admin'] = true;
-    unset($_SESSION['login_error']);
-    header('Location: /index.php');
-    exit;
+try {
+    $stmt = $pdo->prepare('SELECT id, password FROM admins WHERE login = ?');
+    $stmt->execute([$username]);
+    $admin = $stmt->fetch();
+    if ($admin && password_verify($password, $admin['password'])) {
+        session_regenerate_id(true);
+        $_SESSION['is_admin'] = true;
+        unset($_SESSION['login_error']);
+        header('Location: /index.php');
+        exit;
+    }
+} catch (PDOException $e) {
 }
 
 try {
