@@ -19,6 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
                 $pdo->prepare('DELETE FROM password_resets WHERE user_id = ?')->execute([(int) $user['id']]);
                 $pdo->prepare('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)')->execute([(int) $user['id'], $token, $expiresAt]);
+                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'] ?? 'mojawalentynkakcc.pl';
+                $resetLink = $scheme . '://' . $host . '/reset_password.php?token=' . urlencode($token);
+
+                $subject = 'Reset hasla';
+                $body = "Kliknij link aby ustawic nowe haslo:\n\n" . $resetLink . "\n\nLink wygasa za 1 godzine.";
+                $headers = "From: noreply@" . $host . "\r\n";
+                $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+                @mail($user['email'], $subject, $body, $headers);
             }
 
             $message = 'Jesli konto istnieje to link zostal wyslany.';
