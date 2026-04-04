@@ -11,8 +11,10 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
       <span class="close" onclick="closeLoginModal()">&times;</span>
 
       <div class="lm-tabs">
-        <button type="button" class="lm-tab <?= $showReg ? '' : 'lm-tab--active' ?>" onclick="switchTab('login')">Zaloguj się</button>
-        <button type="button" class="lm-tab <?= $showReg ? 'lm-tab--active' : '' ?>" onclick="switchTab('register')">Zarejestruj się</button>
+        <button type="button" class="lm-tab <?= $showReg ? '' : 'lm-tab--active' ?>"
+          onclick="switchTab('login')">Zaloguj się</button>
+        <button type="button" class="lm-tab <?= $showReg ? 'lm-tab--active' : '' ?>"
+          onclick="switchTab('register')">Zarejestruj się</button>
         <span class="lm-tab-indicator" id="lmTabIndicator"></span>
       </div>
 
@@ -32,6 +34,11 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
           <div class="form-group">
             <label for="password">Hasło</label>
             <input type="password" id="password" name="password" class="input" required autocomplete="current-password">
+
+            <p class="lm-switch-hint" style="margin-top:-4px; margin-bottom:14px;">
+              <a href="forgot_password.php" class="lm-link">Nie pamiętasz hasła?</a>
+            </p>
+
           </div>
           <button type="submit" class="btn btn-full btn-login-anim" id="loginSubmitBtn">
             <span class="btn-login-text">Zaloguj się</span>
@@ -39,7 +46,8 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
           </button>
         </form>
 
-        <p class="lm-switch-hint">Nie masz konta? <button type="button" class="lm-link" onclick="switchTab('register')">Zarejestruj się</button></p>
+        <p class="lm-switch-hint">Nie masz konta? <button type="button" class="lm-link"
+            onclick="switchTab('register')">Zarejestruj się</button></p>
       </div>
 
       <div id="lmPanelRegister" class="lm-panel <?= $showReg ? '' : 'lm-panel--hidden' ?>">
@@ -53,15 +61,18 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
         <form action="register.php" method="post" id="registerForm">
           <div class="form-group">
             <label for="reg_email">Adres email</label>
-            <input type="email" id="reg_email" name="reg_email" class="input" required autocomplete="email" placeholder="np. jan@example.com">
+            <input type="email" id="reg_email" name="reg_email" class="input" required autocomplete="email"
+              placeholder="np. jan@example.com">
           </div>
           <div class="form-group">
             <label for="reg_password">Hasło <span class="lm-hint">(min. 6 znaków)</span></label>
-            <input type="password" id="reg_password" name="reg_password" class="input" required autocomplete="new-password" minlength="6">
+            <input type="password" id="reg_password" name="reg_password" class="input" required
+              autocomplete="new-password" minlength="6">
           </div>
           <div class="form-group">
             <label for="reg_password2">Powtórz hasło</label>
-            <input type="password" id="reg_password2" name="reg_password2" class="input" required autocomplete="new-password" minlength="6">
+            <input type="password" id="reg_password2" name="reg_password2" class="input" required
+              autocomplete="new-password" minlength="6">
           </div>
           <button type="submit" class="btn btn-full btn-reg-anim" id="registerSubmitBtn">
             <span class="btn-reg-text">Utwórz konto</span>
@@ -69,7 +80,8 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
           </button>
         </form>
 
-        <p class="lm-switch-hint">Masz już konto? <button type="button" class="lm-link" onclick="switchTab('login')">Zaloguj się</button></p>
+        <p class="lm-switch-hint">Masz już konto? <button type="button" class="lm-link"
+            onclick="switchTab('login')">Zaloguj się</button></p>
       </div>
 
     </div>
@@ -288,14 +300,14 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
     }
   }
 
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     const modal = document.getElementById('loginModal');
     if (modal && e.target === modal) closeLoginModal();
   });
 
   const loginBtn = document.getElementById('loginSubmitBtn');
   if (loginBtn) {
-    loginBtn.addEventListener('mousemove', function(e) {
+    loginBtn.addEventListener('mousemove', function (e) {
       const r = loginBtn.getBoundingClientRect();
       const x = ((e.clientX - r.left) / r.width * 100).toFixed(1);
       const y = ((e.clientY - r.top) / r.height * 100).toFixed(1);
@@ -351,7 +363,7 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
 
   if (regBtn) {
     regBtn.addEventListener('mouseenter', spawnParticles);
-    regBtn.addEventListener('click', function() {
+    regBtn.addEventListener('click', function () {
       spawnParticles();
       regBtn.classList.add('success');
       setTimeout(() => regBtn.classList.remove('success'), 600);
@@ -359,7 +371,7 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
   }
 
   <?php if (!empty($_SESSION['is_admin']) || !empty($_SESSION['user_id'])): ?>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const modal = document.getElementById('loginModal');
       if (modal) {
         modal.classList.remove('show');
@@ -369,11 +381,11 @@ $showReg = !empty($_SESSION['reg_error']) || (isset($_SERVER['HTTP_REFERER']) &&
   <?php endif; ?>
 
   <?php if (!empty($_SESSION['reg_error'])): ?>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       openLoginModal('register');
     });
   <?php elseif (!empty($_SESSION['login_error'])): ?>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       openLoginModal('login');
     });
   <?php endif; ?>
