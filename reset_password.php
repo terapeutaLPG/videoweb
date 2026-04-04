@@ -24,6 +24,26 @@ if ($token === '') {
         $error = 'Blad serwera.';
     }
 }
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
+    $password = (string) ($_POST['password'] ?? '');
+    $password2 = (string) ($_POST['password2'] ?? '');
+
+    if (mb_strlen($password) < 6) {
+        $error = 'Haslo musi miec minimum 6 znakow.';
+    } elseif ($password !== $password2) {
+        $error = 'Hasla nie sa identyczne.';
+    } else {
+        try {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $pdo->prepare('UPDATE users SET password = ? WHERE id = ?')->execute([$hash, $userId]);
+            $pdo->prepare('DELETE FROM password_resets WHERE user_id = ?')->execute([$userId]);
+            $success = 'Haslo zostalo zmienione. Mozesz sie zalogowac.';
+            $validToken = false;
+        } catch (PDOException $e) {
+            $error = 'Blad serwera.';
+        }
+    }
+}
 ?>
 <!doctype html>
 <html lang="pl">
@@ -103,6 +123,9 @@ if ($token === '') {
 <body>
     <div class="card">
         <h1>Ustaw nowe haslo</h1>
+        <?php if ($success): ?>
+            <p style="color:#39d3ff;"><?= htmlspecialchars($success) ?></p>
+        <?php endif; ?>
         <?php if ($error): ?>
             <p style="color:#ff6b7a;"><?= htmlspecialchars($error) ?></p>
         <?php elseif ($validToken): ?>
