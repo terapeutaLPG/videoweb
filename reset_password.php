@@ -6,6 +6,24 @@ $error = '';
 $success = '';
 $validToken = false;
 $userId = 0;
+if ($token === '') {
+    $error = 'Brak tokenu resetu.';
+} else {
+    try {
+        $stmt = $pdo->prepare('SELECT user_id FROM password_resets WHERE token = ? AND expires_at > NOW() LIMIT 1');
+        $stmt->execute([$token]);
+        $reset = $stmt->fetch();
+
+        if ($reset) {
+            $validToken = true;
+            $userId = (int) $reset['user_id'];
+        } else {
+            $error = 'Link jest nieprawidlowy albo wygasl.';
+        }
+    } catch (PDOException $e) {
+        $error = 'Blad serwera.';
+    }
+}
 ?>
 <!doctype html>
 <html lang="pl">
@@ -85,7 +103,20 @@ $userId = 0;
 <body>
     <div class="card">
         <h1>Ustaw nowe haslo</h1>
-        <p>Formularz zmiany hasla.</p>
+        <?php if ($error): ?>
+            <p style="color:#ff6b7a;"><?= htmlspecialchars($error) ?></p>
+        <?php elseif ($validToken): ?>
+            <p>Wpisz nowe haslo do swojego konta</p>
+            <form method="post">
+                <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+                <label for="password">Nowe haslo</label>
+                <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+                <label for="password2">Powtorz nowe haslo</label>
+                <input type="password" id="password2" name="password2" required minlength="6" autocomplete="new-password">
+                <button type="submit">Zmien haslo</button>
+            </form>
+        <?php endif; ?>
+
         <p><a href="index.php">Wroc do strony</a></p>
     </div>
 </body>
