@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require __DIR__ . '/db.php';
 
 $username = trim($_POST['username'] ?? '');
-$password = (string)($_POST['password'] ?? '');
+$password = (string) ($_POST['password'] ?? '');
 
 function adminPasswordMatches(string $inputPassword, string $storedPassword): bool
 {
@@ -35,7 +35,6 @@ function adminPasswordMatches(string $inputPassword, string $storedPassword): bo
         }
     }
 
-    // Legacy fallback: md5/sha1/plaintext. If used, it will be upgraded after login.
     if (strlen($storedPassword) === 32 && ctype_xdigit($storedPassword) && hash_equals(strtolower($storedPassword), md5($inputPassword))) {
         return true;
     }
@@ -54,18 +53,18 @@ try {
     $stmt->execute([$username]);
     $admin = $stmt->fetch();
     if ($admin) {
-        $stored = (string)$admin['password'];
+        $stored = (string) $admin['password'];
         if (adminPasswordMatches($password, $stored)) {
             session_regenerate_id(true);
             $_SESSION['is_admin'] = true;
-            $_SESSION['admin_login'] = (string)$admin['login'];
+            $_SESSION['admin_login'] = (string) $admin['login'];
             unset($_SESSION['user_id'], $_SESSION['user_email']);
             unset($_SESSION['login_error']);
 
             if (password_get_info($stored)['algo'] === null || password_needs_rehash($stored, PASSWORD_DEFAULT)) {
                 $newHash = password_hash($password, PASSWORD_DEFAULT);
                 $up = $pdo->prepare('UPDATE admins SET password = ? WHERE id = ?');
-                $up->execute([$newHash, (int)$admin['id']]);
+                $up->execute([$newHash, (int) $admin['id']]);
             }
 
             header('Location: index.php');
@@ -82,7 +81,7 @@ try {
     $user = $stmt->fetch();
     if ($user && password_verify($password, $user['password'])) {
         session_regenerate_id(true);
-        $_SESSION['user_id']    = (int)$user['id'];
+        $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['user_email'] = $user['email'];
         unset($_SESSION['is_admin'], $_SESSION['admin_login']);
         unset($_SESSION['login_error']);
