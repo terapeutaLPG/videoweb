@@ -3,10 +3,10 @@ header('Content-Type: text/html; charset=UTF-8');
 require __DIR__ . '/db.php';
 $isAdmin = !empty($_SESSION['is_admin']);
 
-// katalog z filmami
+
 $videoDir = 'videos';
 
-// pobieramy wszystkie mp4
+
 $videos = glob($videoDir . '/*.mp4');
 
 echo '<h2>Filmy</h2>';
@@ -16,7 +16,7 @@ if (!$videos) {
     return;
 }
 
-// sortowanie: najnowsze pierwsze
+
 usort($videos, function ($a, $b) {
     return filemtime($b) - filemtime($a);
 });
@@ -29,7 +29,7 @@ foreach ($videos as $video) {
     echo '<h3>' . htmlspecialchars($title) . '</h3>';
     echo '<video src="' . htmlspecialchars($video) . '" controls width="600"></video>';
 
-    // opcje admina
+
     if ($isAdmin) {
         echo '<div style="margin-top:10px; opacity:0.7;">';
         echo 'Plik: ' . htmlspecialchars($fileName);

@@ -1,5 +1,32 @@
 <?php
 require __DIR__ . '/db.php';
+$message = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+
+    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Podaj poprawny adres email.';
+    } else {
+        try {
+            $stmt = $pdo->prepare('SELECT id, email FROM users WHERE email = ? LIMIT 1');
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+
+            if ($user) {
+                $token = bin2hex(random_bytes(32));
+                $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
+                $pdo->prepare('DELETE FROM password_resets WHERE user_id = ?')->execute([(int) $user['id']]);
+                $pdo->prepare('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)')->execute([(int) $user['id'], $token, $expiresAt]);
+            }
+
+            $message = 'Jesli konto istnieje to link zostal wyslany.';
+        } catch (PDOException $e) {
+            $error = 'Bląd serwera';
+        }
+    }
+}
 ?>
 <!doctype html>
 <html lang="pl">
@@ -84,6 +111,12 @@ require __DIR__ . '/db.php';
             <input type="email" id="email" name="email" required>
             <button type="submit">Wyslij link</button>
         </form>
+        <?php if ($message): ?>
+            <p style="color:#39d3ff;"><?= htmlspecialchars($message) ?></p>
+        <?php endif; ?>
+        <?php if ($error): ?>
+            <p style="color:#ff6b7a;"><?= htmlspecialchars($error) ?></p>
+        <?php endif; ?>
         <p><a href="index.php">Wroc do strony</a></p>
     </div>
 </body>
