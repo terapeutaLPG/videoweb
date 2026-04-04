@@ -274,9 +274,11 @@ switch ($endpoint) {
         break;
     case 'like':
         $user = checkAuth();
-        if (!$user) sendJson(['error' => 'Unauthorized'], 401);
+        if (!$user)
+            sendJson(['error' => 'Unauthorized'], 401);
         $filename = $_GET['file'] ?? '';
-        if (empty($filename)) sendJson(['error' => 'Brak nazwy pliku'], 400);
+        if (empty($filename))
+            sendJson(['error' => 'Brak nazwy pliku'], 400);
         if ($method === 'POST') {
             try {
                 $stmt = $pdo->prepare('SELECT id FROM likes WHERE user_id = ? AND video_filename = ?');
@@ -290,7 +292,7 @@ switch ($endpoint) {
                 }
                 $count = $pdo->prepare('SELECT COUNT(*) FROM likes WHERE video_filename = ?');
                 $count->execute([$filename]);
-                sendJson(['liked' => $liked, 'count' => (int)$count->fetchColumn()]);
+                sendJson(['liked' => $liked, 'count' => (int) $count->fetchColumn()]);
             } catch (PDOException $e) {
                 sendJson(['error' => $e->getMessage()], 500);
             }
@@ -298,10 +300,10 @@ switch ($endpoint) {
             try {
                 $stmt = $pdo->prepare('SELECT COUNT(*) FROM likes WHERE video_filename = ?');
                 $stmt->execute([$filename]);
-                $total = (int)$stmt->fetchColumn();
+                $total = (int) $stmt->fetchColumn();
                 $stmt2 = $pdo->prepare('SELECT id FROM likes WHERE user_id = ? AND video_filename = ?');
                 $stmt2->execute([$user['id'], $filename]);
-                sendJson(['liked' => (bool)$stmt2->fetch(), 'count' => $total]);
+                sendJson(['liked' => (bool) $stmt2->fetch(), 'count' => $total]);
             } catch (PDOException $e) {
                 sendJson(['error' => $e->getMessage()], 500);
             }
@@ -310,17 +312,21 @@ switch ($endpoint) {
 
     case 'comments':
         $user = checkAuth();
-        if (!$user) sendJson(['error' => 'Unauthorized'], 401);
+        if (!$user)
+            sendJson(['error' => 'Unauthorized'], 401);
         $filename = $_GET['file'] ?? '';
-        if (empty($filename)) sendJson(['error' => 'Brak nazwy pliku'], 400);
+        if (empty($filename))
+            sendJson(['error' => 'Brak nazwy pliku'], 400);
         if ($method === 'POST') {
             $data = json_decode(file_get_contents('php://input'), true);
             $content = trim($data['content'] ?? '');
-            if (empty($content)) sendJson(['error' => 'Komentarz pusty'], 400);
-            if (mb_strlen($content) > 500) sendJson(['error' => 'Max 500 znaków'], 400);
+            if (empty($content))
+                sendJson(['error' => 'Komentarz pusty'], 400);
+            if (mb_strlen($content) > 500)
+                sendJson(['error' => 'Max 500 znaków'], 400);
             try {
                 $pdo->prepare('INSERT INTO comments (user_id, video_filename, content) VALUES (?, ?, ?)')->execute([$user['id'], $filename, $content]);
-                sendJson(['success' => true, 'comment' => ['id' => (int)$pdo->lastInsertId(), 'email' => $user['email'], 'content' => $content, 'created_at' => date('Y-m-d H:i:s')]]);
+                sendJson(['success' => true, 'comment' => ['id' => (int) $pdo->lastInsertId(), 'email' => $user['email'], 'content' => $content, 'created_at' => date('Y-m-d H:i:s')]]);
             } catch (PDOException $e) {
                 sendJson(['error' => $e->getMessage()], 500);
             }
@@ -334,8 +340,9 @@ switch ($endpoint) {
             }
         } elseif ($method === 'DELETE') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $commentId = (int)($data['id'] ?? 0);
-            if (!$commentId) sendJson(['error' => 'Brak ID'], 400);
+            $commentId = (int) ($data['id'] ?? 0);
+            if (!$commentId)
+                sendJson(['error' => 'Brak ID'], 400);
             try {
                 $pdo->prepare('DELETE FROM comments WHERE id = ? AND user_id = ?')->execute([$commentId, $user['id']]);
                 sendJson(['success' => true]);
@@ -343,6 +350,32 @@ switch ($endpoint) {
                 sendJson(['error' => $e->getMessage()], 500);
             }
         }
+        break;
+
+    case 'forgot_password':
+        if ($method !== 'POST')
+            sendJson(['error' => 'Method not allowed'], 405);
+        $data = json_decode(file_get_contents('php://input'), true);
+        $email = trim($data['email'] ?? '');
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL))
+            sendJson(['error' => 'Nieprawidlowy email'], 400);
+
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            $token = bin2hex(random_bytes(32));
+            $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+            $pdo->prepare("DELETE FROM password_resets WHERE user_id = ?")->execute([$user['id']]);
+            $pdo->prepare("INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)")
+                ->execute([$user['id'], $token, $expires]);
+            $link = 'https://mojawalentynkakcc.pl/reset_password.php?token=' . urlencode($token);
+            $headers = "From: noreply@mojawalentynkakcc.pl\r\nContent-Type: text/plain; charset=UTF-8\r\n";
+            @mail($email, 'Reset hasla', "Link do resetu:\n\n$link\n\nWygasa za 1h.", $headers);
+        }
+
+        sendJson(['message' => 'Jesli konto istnieje, wyslano link na email']);
         break;
 
 
