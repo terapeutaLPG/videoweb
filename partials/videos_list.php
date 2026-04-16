@@ -722,13 +722,10 @@ try {
 
 
                 const loadTvMode = () => {
-                    let saved = false;
+                    applyTvMode(false);
                     try {
-                        saved = localStorage.getItem(TV_STORAGE_KEY) === '1';
-                    } catch (err) {
-                        saved = false;
-                    }
-                    applyTvMode(saved);
+                        localStorage.removeItem(TV_STORAGE_KEY);
+                    } catch (err) {}
                 };
 
 
@@ -739,9 +736,6 @@ try {
                         applyTvMode(next);
                         animateTvToggle();
                         if (next) showTvToast();
-                        try {
-                            localStorage.setItem(TV_STORAGE_KEY, next ? '1' : '0');
-                        } catch (err) {}
                     });
                 } else {
                     loadTvMode();
