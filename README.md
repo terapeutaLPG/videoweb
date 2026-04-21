@@ -55,3 +55,8 @@ graph TD
     A[Web - PHP] -->|REST| B[api.php]
     C[Mobile - Flutter] -->|REST| B
     B -->|PDO| D[(MySQL)]
+
+
+
+zdjęcie z aplikacji typu WinSCP
+![alt text](image.png)
