@@ -58,5 +58,3 @@ graph TD
 
 
 
-zdjęcie z aplikacji typu WinSCP
-![alt text](image.png)
