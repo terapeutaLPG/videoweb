@@ -1,3 +1,4 @@
+🎤
 Potwierdzenie zasad pracy
 # VideoWeb
 
